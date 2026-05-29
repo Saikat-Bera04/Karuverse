@@ -1,11 +1,17 @@
-const { useEffect, useRef } = React;
+import { useEffect, useRef } from "react";
 
-function FadingVideo({ src, className, style }) {
-  const videoRef = useRef(null);
-  const rafIdRef = useRef(null);
-  const fadingOutRef = useRef(false);
+interface FadingVideoProps {
+  src: string;
+  className?: string;
+  style?: React.CSSProperties;
+}
 
-  const fadeTo = (targetOpacity, durationMs) => {
+function FadingVideo({ src, className, style }: FadingVideoProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const fadingOutRef = useRef<boolean>(false);
+
+  const fadeTo = (targetOpacity: number, durationMs: number) => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -20,7 +26,7 @@ function FadingVideo({ src, className, style }) {
 
     const startTime = performance.now();
 
-    const animate = (currentTimeMs) => {
+    const animate = (currentTimeMs: number) => {
       const elapsed = currentTimeMs - startTime;
       const progress = Math.min(elapsed / durationMs, 1);
       
@@ -117,4 +123,4 @@ function FadingVideo({ src, className, style }) {
   );
 }
 
-window.FadingVideo = FadingVideo;
+export default FadingVideo;

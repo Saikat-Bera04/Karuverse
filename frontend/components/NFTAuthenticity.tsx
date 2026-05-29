@@ -1,10 +1,19 @@
-const { useState } = React;
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+interface VerificationResult {
+  tokenId: string;
+  smartContract: string;
+  creatorAddress: string;
+  blockNumber: string;
+  regionVerified: string;
+  status: string;
+}
 
 function NFTAuthenticity() {
-  const { motion } = window.Motion;
-  const [activeStep, setActiveStep] = useState(0);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState(null);
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
 
   const steps = [
     {
@@ -142,7 +151,7 @@ function NFTAuthenticity() {
               </span>
             </div>
 
-            {/* Certificate Middle: Graphic Badge (Terracotta / Weaving Hologram graphic) */}
+            {/* Certificate Middle: Graphic Badge */}
             <div className="flex-1 flex flex-col items-center justify-center my-6 relative">
               
               {/* Spinning Web3 Hologram simulation */}
@@ -228,4 +237,4 @@ function NFTAuthenticity() {
   );
 }
 
-window.NFTAuthenticity = NFTAuthenticity;
+export default NFTAuthenticity;

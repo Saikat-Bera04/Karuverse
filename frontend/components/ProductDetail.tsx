@@ -1,8 +1,26 @@
-const { useState } = React;
+import { useState } from "react";
+import { motion } from "framer-motion";
 
-function ProductDetail({ product, onClose }) {
-  const { motion, AnimatePresence } = window.Motion;
-  const [purchaseStep, setPurchaseStep] = useState(0); // 0: Idle, 1: Connecting, 2: Transacting, 3: Completed
+interface Product {
+  id: string;
+  name: string;
+  craftType: string;
+  region: string;
+  artisan: string;
+  price: number;
+  desc: string;
+  emoji: string;
+  nftVerified: boolean;
+  storySnippet?: string;
+}
+
+interface ProductDetailProps {
+  product: Product | null;
+  onClose: () => void;
+}
+
+function ProductDetail({ product, onClose }: ProductDetailProps) {
+  const [purchaseStep, setPurchaseStep] = useState<number>(0); // 0: Idle, 1: Connecting, 2: Transacting, 3: Completed
 
   if (!product) return null;
 
@@ -141,7 +159,7 @@ function ProductDetail({ product, onClose }) {
         {/* Footer Checkout CTA Section */}
         <div className="p-6 border-t border-white/5 sticky bottom-0 bg-[#0F0F0F]/95 backdrop-blur-md z-20 flex flex-col gap-4">
           
-          {/* Purchase Progress Animation */}
+          {/* Purchase Progress */}
           {purchaseStep === 0 && (
             <button
               onClick={handlePurchase}
@@ -199,4 +217,4 @@ function ProductDetail({ product, onClose }) {
   );
 }
 
-window.ProductDetail = ProductDetail;
+export default ProductDetail;

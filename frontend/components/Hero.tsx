@@ -1,22 +1,17 @@
-function Hero({ setCurrentPage }) {
-  const { motion } = window.Motion;
+import { motion } from "framer-motion";
+import FadingVideo from "./FadingVideo";
+import BlurText from "./BlurText";
 
-  // Animation variants for entering content
-  const itemVariants = {
-    hidden: { filter: "blur(10px)", opacity: 0, y: 20 },
-    visible: { 
-      filter: "blur(0px)", 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" }
-    }
-  };
+interface HeroProps {
+  setCurrentPage: (page: string) => void;
+}
 
+function Hero({ setCurrentPage }: HeroProps) {
   return (
     <section className="relative w-screen h-screen overflow-hidden bg-black flex flex-col justify-between select-none">
       
       {/* Background Cinematic Video with custom crossfade */}
-      <window.FadingVideo 
+      <FadingVideo 
         src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4"
         className="absolute left-1/2 top-0 -translate-x-1/2 object-cover object-top z-0"
         style={{ width: "120%", height: "120%" }}
@@ -52,7 +47,7 @@ function Hero({ setCurrentPage }) {
 
         {/* 2. Headline - BlurText word-by-word animation (starts automatically) */}
         <div className="mt-6 max-w-3xl">
-          <window.BlurText 
+          <BlurText 
             text="Where Bengal's Heritage Meets the Future" 
             className="text-5xl md:text-7xl lg:text-[5.5rem] font-heading italic text-[#F4EDE4] leading-[0.8] max-w-3xl justify-center tracking-[-3px] alpana-texture"
           />
@@ -136,7 +131,7 @@ function Hero({ setCurrentPage }) {
                 340+
               </div>
               <p className="text-[11px] text-[#F4EDE4]/60 font-body font-light mt-1.5">
-                Artisans Digitally Onboarded
+                Artisans Onboarded
               </p>
             </div>
           </div>
@@ -153,7 +148,7 @@ function Hero({ setCurrentPage }) {
                 890.5k
               </div>
               <p className="text-[11px] text-[#F4EDE4]/60 font-body font-light mt-1.5">
-                MATIC Circulated Directly
+                MATIC Circulated
               </p>
             </div>
           </div>
@@ -187,4 +182,4 @@ function Hero({ setCurrentPage }) {
   );
 }
 
-window.Hero = Hero;
+export default Hero;

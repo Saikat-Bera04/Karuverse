@@ -1,13 +1,13 @@
-const { useState } = React;
+import { useState } from "react";
+import { motion } from "framer-motion";
 
 function AIFeatures() {
-  const { motion } = window.Motion;
-  const [activeFeature, setActiveFeature] = useState(0);
+  const [activeFeature, setActiveFeature] = useState<number>(0);
 
   // Translation Simulation State
-  const [transInput, setTransInput] = useState("এই জামদানি শাড়িটি আমাদের গ্রামে তাঁত বোনা হয়েছে।");
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [transOutput, setTransOutput] = useState("");
+  const [transInput, setTransInput] = useState<string>("এই জামদানি শাড়িটি আমাদের গ্রামে তাঁত বোনা হয়েছে।");
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [transOutput, setTransOutput] = useState<string>("");
 
   const simulateTranslation = () => {
     setIsTranslating(true);
@@ -19,8 +19,8 @@ function AIFeatures() {
   };
 
   // Pricing Assistant Simulation State
-  const [hoursSpent, setHoursSpent] = useState(18);
-  const [materialCost, setMaterialCost] = useState(120); // in MATIC
+  const [hoursSpent, setHoursSpent] = useState<number>(18);
+  const [materialCost, setMaterialCost] = useState<number>(120); // in MATIC
 
   const baseArtisanWage = 8; // MATIC per hour
   const platformFee = 0.05; // 5%
@@ -154,7 +154,6 @@ function AIFeatures() {
               key={activeFeature}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
               className="liquid-glass-strong border border-white/5 rounded-[1.5rem] p-6 md:p-8 flex flex-col justify-between flex-1 min-h-[440px] alpana-texture"
             >
@@ -313,4 +312,4 @@ function AIFeatures() {
   );
 }
 
-window.AIFeatures = AIFeatures;
+export default AIFeatures;

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Optimization -->
+  <title>KaruVerse - Preserving Bengali Heritage through AI & Web3 Provenance</title>
+  <meta name="description" content="Discover authentic Bengali craftsmanship direct from master rural creators. Secured by Polygon smart contract NFT certificates and empowered by AI storytelling and real-time dialect translation.">
+  <meta name="keywords" content="Bengali craftsmanship, handloom, terracotta, dokra, Shantiniketan, AI storytelling, Web3, Polygon, NFT provenance, fair trade">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23C76B29'/%3E%3Ctext x='50' y='65' font-size='40' font-family='serif' font-style='italic' fill='%23F4EDE4' text-anchor='middle'%3Ek%3C/text%3E%3C/svg%3E">
+
+  <!-- Google Fonts Link -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+
+  <!-- Core CDNs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/framer-motion@11.11.17/dist/framer-motion.js"></script>
+  <script>
+    window.FramerMotion = window.FramerMotion || window.Motion;
+    window.Motion = window.FramerMotion;
+  </script>
+
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Tailwind CDN Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ["'Instrument Serif'", "serif"],
+            body: ["'Poppins'", "sans-serif"],
+            traditional: ["'Cormorant Garamond'", "serif"],
+          },
+          borderRadius: {
+            DEFAULT: "9999px", /* Overrides default rounded pill */
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0F0F0F] text-[#F4EDE4]">
+
+  <!-- React root mount point -->
+  <div id="root">
+    <!-- Beautiful skeleton loading loader displayed before React Babel finishes compilation -->
+    <div class="fixed inset-0 flex flex-col justify-center items-center bg-[#0F0F0F] z-[1000] font-body select-none">
+      <div class="relative w-20 h-20 border border-dashed border-[#C76B29]/30 rounded-full flex items-center justify-center animate-spin mb-4">
+        <div class="w-14 h-14 border border-dashed border-[#A91D3A]/40 rounded-full"></div>
+      </div>
+      <h1 class="font-heading italic text-4xl text-white tracking-wide">KaruVerse</h1>
+      <p class="text-[10px] uppercase font-mono tracking-widest text-[#F4EDE4]/40 mt-1">Initializing Creative Ledger Node...</p>
+    </div>
+  </div>
+
+  <!-- React Component Declarations (loaded in dependency order) -->
+  <script type="text/babel" src="components/FadingVideo.jsx"></script>
+  <script type="text/babel" src="components/BlurText.jsx"></script>
+  <script type="text/babel" src="components/Navbar.jsx"></script>
+  <script type="text/babel" src="components/Hero.jsx"></script>
+  <script type="text/babel" src="components/Artisans.jsx"></script>
+  <script type="text/babel" src="components/AIFeatures.jsx"></script>
+  <script type="text/babel" src="components/NFTAuthenticity.jsx"></script>
+  <script type="text/babel" src="components/LiveWorkshops.jsx"></script>
+  <script type="text/babel" src="components/Marketplace.jsx"></script>
+  <script type="text/babel" src="components/ProductDetail.jsx"></script>
+  <script type="text/babel" src="components/Dashboard.jsx"></script>
+  <script type="text/babel" src="components/WorkshopRoom.jsx"></script>
+  <script type="text/babel" src="components/About.jsx"></script>
+  
+  <!-- Central Coordinator App -->
+  <script type="text/babel" src="app.jsx"></script>
+
+  <!-- React Main Bootstrapper -->
+  <script type="text/babel">
+    const rootElement = document.getElementById("root");
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
+
+</body>
+</html>

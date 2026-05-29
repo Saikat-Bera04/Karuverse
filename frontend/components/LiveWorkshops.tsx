@@ -1,7 +1,26 @@
-function LiveWorkshops({ setCurrentPage, setActiveWorkshop }) {
-  const { motion } = window.Motion;
+import { motion } from "framer-motion";
 
-  const workshops = [
+interface Workshop {
+  id: string;
+  title: string;
+  artisan: string;
+  village: string;
+  type: string;
+  status: string;
+  badgeColor: string;
+  image: string;
+  desc: string;
+  time: string;
+  participants: string;
+}
+
+interface LiveWorkshopsProps {
+  setCurrentPage: (page: string) => void;
+  setActiveWorkshop?: (workshop: Workshop) => void;
+}
+
+function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps) {
+  const workshops: Workshop[] = [
     {
       id: "pottery",
       title: "Bankura Terracotta Modeling",
@@ -56,8 +75,10 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }) {
     }
   ];
 
-  const handleJoin = (work) => {
-    setActiveWorkshop(work);
+  const handleJoin = (work: Workshop) => {
+    if (setActiveWorkshop) {
+      setActiveWorkshop(work);
+    }
     setCurrentPage("workshop_room");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -128,7 +149,7 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }) {
                     </span>
                   </div>
                   
-                  {/* Workshop Title */}
+                  {/* Title details */}
                   <div className="flex gap-4 items-start">
                     <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl shrink-0">
                       {work.image}
@@ -185,4 +206,4 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }) {
   );
 }
 
-window.LiveWorkshops = LiveWorkshops;
+export default LiveWorkshops;

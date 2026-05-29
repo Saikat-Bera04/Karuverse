@@ -1,9 +1,14 @@
-const { useState } = React;
+import { useState } from "react";
 
-function Navbar({ currentPage, setCurrentPage }) {
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+interface NavbarProps {
+  currentPage: string;
+  setCurrentPage: (page: string) => void;
+}
+
+function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const simulateWalletConnect = () => {
     if (walletAddress) {
@@ -169,4 +174,4 @@ function Navbar({ currentPage, setCurrentPage }) {
   );
 }
 
-window.Navbar = Navbar;
+export default Navbar;

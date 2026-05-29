@@ -1,8 +1,14 @@
-const { useState, useEffect, useRef } = React;
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
-function BlurText({ text, className }) {
-  const [isInView, setIsInView] = useState(false);
-  const containerRef = useRef(null);
+interface BlurTextProps {
+  text: string;
+  className?: string;
+}
+
+function BlurText({ text, className }: BlurTextProps) {
+  const [isInView, setIsInView] = useState<boolean>(false);
+  const containerRef = useRef<HTMLParagraphElement | null>(null);
   
   // Handle IntersectionObserver for 10% visibility
   useEffect(() => {
@@ -29,7 +35,6 @@ function BlurText({ text, className }) {
   }, []);
 
   const words = text.split(" ");
-  const { motion } = window.Motion;
 
   return (
     <p
@@ -73,4 +78,4 @@ function BlurText({ text, className }) {
   );
 }
 
-window.BlurText = BlurText;
+export default BlurText;

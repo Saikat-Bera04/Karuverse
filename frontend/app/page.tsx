@@ -1,11 +1,51 @@
-const { useState, useEffect } = React;
+"use client";
 
-function App() {
-  const [currentPage, setCurrentPage] = useState("landing");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+import { useState, useEffect } from "react";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import Artisans from "@/components/Artisans";
+import AIFeatures from "@/components/AIFeatures";
+import NFTAuthenticity from "@/components/NFTAuthenticity";
+import LiveWorkshops from "@/components/LiveWorkshops";
+import About from "@/components/About";
+import Marketplace from "@/components/Marketplace";
+import Dashboard from "@/components/Dashboard";
+import WorkshopRoom from "@/components/WorkshopRoom";
+import ProductDetail from "@/components/ProductDetail";
+
+interface Product {
+  id: string;
+  name: string;
+  craftType: string;
+  region: string;
+  artisan: string;
+  price: number;
+  desc: string;
+  emoji: string;
+  nftVerified: boolean;
+  storySnippet?: string;
+}
+
+interface Workshop {
+  id: string;
+  title: string;
+  artisan: string;
+  village: string;
+  type: string;
+  status: string;
+  badgeColor: string;
+  image: string;
+  desc: string;
+  time: string;
+  participants: string;
+}
+
+export default function Home() {
+  const [currentPage, setCurrentPage] = useState<string>("landing");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // Active workshop state (initialized with first active pottery workshop)
-  const [activeWorkshop, setActiveWorkshop] = useState({
+  const [activeWorkshop, setActiveWorkshop] = useState<Workshop>({
     id: "weaving",
     title: "Traditional Jamdani Weaving",
     artisan: "Biren Basak",
@@ -20,7 +60,7 @@ function App() {
   });
 
   // Global products state initialized with premium seed items
-  const [products, setProducts] = useState([
+  const [products, setProducts] = useState<Product[]>([
     {
       id: "48201",
       name: "Phulia Jamdani Cotton Saree",
@@ -88,7 +128,7 @@ function App() {
     const saved = localStorage.getItem("karuverse_user_products");
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as Product[];
         setProducts((prev) => {
           // Prevent duplicates by checking ids
           const existingIds = prev.map((p) => p.id);
@@ -102,7 +142,7 @@ function App() {
   }, []);
 
   // Save new products helper
-  const addProduct = (newProduct) => {
+  const addProduct = (newProduct: Product) => {
     setProducts((prev) => {
       const updated = [...prev, newProduct];
       localStorage.setItem("karuverse_user_products", JSON.stringify(updated.filter(p => !["48201", "11283", "99042", "33891", "54201"].includes(p.id))));
@@ -113,7 +153,7 @@ function App() {
   // Suppression wrapper for harmless framer motion warnings
   useEffect(() => {
     const originalError = console.error;
-    console.error = (...args) => {
+    console.error = (...args: any[]) => {
       if (args[0] && args[0].toString().includes("Framer Motion")) return;
       originalError.apply(console, args);
     };
@@ -126,7 +166,7 @@ function App() {
     <div className="w-full min-h-screen relative bg-[#0F0F0F] text-[#F4EDE4]">
       
       {/* 1. Shared Global Navbar */}
-      <window.Navbar 
+      <Navbar 
         currentPage={currentPage} 
         setCurrentPage={setCurrentPage} 
       />
@@ -135,24 +175,24 @@ function App() {
       <div className="w-full">
         {currentPage === "landing" && (
           <>
-            <window.Hero 
+            <Hero 
               setCurrentPage={setCurrentPage} 
             />
-            <window.Artisans 
+            <Artisans 
               setCurrentPage={setCurrentPage} 
             />
-            <window.AIFeatures />
-            <window.NFTAuthenticity />
-            <window.LiveWorkshops 
+            <AIFeatures />
+            <NFTAuthenticity />
+            <LiveWorkshops 
               setCurrentPage={setCurrentPage} 
               setActiveWorkshop={setActiveWorkshop}
             />
-            <window.About />
+            <About />
           </>
         )}
 
         {currentPage === "marketplace" && (
-          <window.Marketplace 
+          <Marketplace 
             products={products} 
             setSelectedProduct={setSelectedProduct}
             setCurrentPage={setCurrentPage}
@@ -160,24 +200,24 @@ function App() {
         )}
 
         {currentPage === "workshop" && (
-          <window.LiveWorkshops 
+          <LiveWorkshops 
             setCurrentPage={setCurrentPage} 
             setActiveWorkshop={setActiveWorkshop}
           />
         )}
 
         {currentPage === "about" && (
-          <window.About />
+          <About />
         )}
 
         {currentPage === "dashboard" && (
-          <window.Dashboard 
+          <Dashboard 
             addProduct={addProduct}
           />
         )}
 
         {currentPage === "workshop_room" && activeWorkshop && (
-          <window.WorkshopRoom 
+          <WorkshopRoom 
             workshop={activeWorkshop} 
             onClose={() => setCurrentPage("landing")}
           />
@@ -185,7 +225,7 @@ function App() {
       </div>
 
       {/* 3. Global Details Slide-out Drawer */}
-      <window.ProductDetail 
+      <ProductDetail 
         product={selectedProduct} 
         onClose={() => setSelectedProduct(null)} 
       />
@@ -193,5 +233,3 @@ function App() {
     </div>
   );
 }
-
-window.App = App;

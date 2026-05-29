@@ -1,20 +1,46 @@
-const { useState } = React;
+import { useState, FormEvent } from "react";
 
-function Dashboard({ addProduct }) {
-  const { motion } = window.Motion;
+interface Product {
+  id: string;
+  name: string;
+  craftType: string;
+  region: string;
+  artisan: string;
+  price: number;
+  desc: string;
+  emoji: string;
+  nftVerified: boolean;
+  storySnippet?: string;
+}
 
+interface DashboardProps {
+  addProduct: (product: Product) => void;
+}
+
+interface MintedResult {
+  status: string;
+  tokenId: number;
+  txHash: string;
+}
+
+function Dashboard({ addProduct }: DashboardProps) {
   // Form states
-  const [name, setName] = useState("");
-  const [craftType, setCraftType] = useState("handloom");
-  const [region, setRegion] = useState("Nadia");
-  const [artisan, setArtisan] = useState("");
-  const [rawNotes, setRawNotes] = useState("");
+  const [name, setName] = useState<string>("");
+  const [craftType, setCraftType] = useState<string>("handloom");
+  const [region, setRegion] = useState<string>("Nadia");
+  const [artisan, setArtisan] = useState<string>("");
+  const [rawNotes, setRawNotes] = useState<string>("");
   
   // AI and blockchain states
-  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
-  const [aiStory, setAiStory] = useState("");
-  const [isMinting, setIsMinting] = useState(false);
-  const [mintedResult, setMintedResult] = useState(null);
+  const [isGeneratingStory, setIsGeneratingStory] = useState<boolean>(false);
+  const [aiStory, setAiStory] = useState<string>("玛雅");
+  const [isMinting, setIsMinting] = useState<boolean>(false);
+  const [mintedResult, setMintedResult] = useState<MintedResult | null>(null);
+
+  // Initialize story to empty
+  useState(() => {
+    setAiStory("");
+  });
 
   // Stats / Metrics
   const metrics = [
@@ -64,7 +90,7 @@ function Dashboard({ addProduct }) {
   };
 
   // Handle final submission to Marketplace catalog
-  const handleRegisterProduct = (e) => {
+  const handleRegisterProduct = (e: FormEvent) => {
     e.preventDefault();
     if (!name || !artisan || !aiStory || !mintedResult) {
       alert("Please complete the entire pipeline: 1. Input names, 2. Generate AI Story, 3. Mint Blockchain Certificate!");
@@ -78,7 +104,7 @@ function Dashboard({ addProduct }) {
     else if (craftType === "alpana") emoji = "🎨";
     else if (craftType === "instruments") emoji = "🎸";
 
-    const newCraftProduct = {
+    const newCraftProduct: Product = {
       id: mintedResult.tokenId.toString(),
       name: name,
       craftType: craftType,
@@ -182,7 +208,7 @@ function Dashboard({ addProduct }) {
 
               <div className="flex flex-col text-left">
                 <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
-                  Bengal Origin District
+                  Bengal Origin Origin
                 </label>
                 <select
                   value={region}
@@ -205,7 +231,7 @@ function Dashboard({ addProduct }) {
                 Raw Folklore Notes / Story Ideas
               </label>
               <textarea 
-                rows="2"
+                rows={2}
                 placeholder="Talk about patterns, materials, or your village ancestors who taught you this wheel method..."
                 value={rawNotes}
                 onChange={(e) => setRawNotes(e.target.value)}
@@ -281,10 +307,9 @@ function Dashboard({ addProduct }) {
           </form>
         </div>
 
-        {/* Right Side: Metrics, Interactive Charts & Logs (5 cols) */}
+        {/* Right Side: Metrics summary widgets */}
         <div className="lg:col-span-5 flex flex-col gap-6 justify-between">
           
-          {/* Metrics summary widgets */}
           <div className="grid grid-cols-2 gap-4">
             {metrics.map((met, idx) => (
               <div 
@@ -358,4 +383,4 @@ function Dashboard({ addProduct }) {
   );
 }
 
-window.Dashboard = Dashboard;
+export default Dashboard;

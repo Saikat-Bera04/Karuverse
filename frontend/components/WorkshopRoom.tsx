@@ -1,20 +1,42 @@
-const { useState, useEffect } = React;
+import { useState, useEffect, FormEvent } from "react";
 
-function WorkshopRoom({ workshop, onClose }) {
-  const { motion } = window.Motion;
+interface Workshop {
+  id: string;
+  title: string;
+  artisan: string;
+  village: string;
+  type: string;
+  status: string;
+  badgeColor: string;
+  image: string;
+  desc: string;
+  time: string;
+  participants: string;
+}
 
+interface WorkshopRoomProps {
+  workshop: Workshop;
+  onClose: () => void;
+}
+
+interface ChatMessage {
+  user: string;
+  text: string;
+}
+
+function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
   // Donation tipping states
-  const [tipAmount, setTipAmount] = useState(5);
-  const [isTipping, setIsTipping] = useState(false);
-  const [tippedSuccess, setTippedSuccess] = useState(false);
+  const [tipAmount, setTipAmount] = useState<number>(5);
+  const [isTipping, setIsTipping] = useState<boolean>(false);
+  const [tippedSuccess, setTippedSuccess] = useState<boolean>(false);
 
   // Chat message simulator state
-  const [chatMessages, setChatMessages] = useState([
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { user: "Joy01", text: "This supplementary weaving requires so much patience!" },
     { user: "SarahCollector", text: "The detail on the ektara looks beautiful." },
     { user: "Web3Heritage", text: "Direct P2P tip incoming! Keep preserving culture." }
   ]);
-  const [newMsg, setNewMsg] = useState("");
+  const [newMsg, setNewMsg] = useState<string>("");
 
   // Auto add comments periodically for realism
   useEffect(() => {
@@ -25,7 +47,7 @@ function WorkshopRoom({ workshop, onClose }) {
       { user: "AliceTravels", text: "Is there an NFT certificate for this piece?" }
     ];
 
-    let timer = setInterval(() => {
+    const timer = setInterval(() => {
       const randomComment = mockComments[Math.floor(Math.random() * mockComments.length)];
       setChatMessages((prev) => [...prev, randomComment]);
     }, 4500);
@@ -33,7 +55,7 @@ function WorkshopRoom({ workshop, onClose }) {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSendChat = (e) => {
+  const handleSendChat = (e: FormEvent) => {
     e.preventDefault();
     if (!newMsg.trim()) return;
     setChatMessages((prev) => [...prev, { user: "You", text: newMsg }]);
@@ -59,7 +81,7 @@ function WorkshopRoom({ workshop, onClose }) {
 
       <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col gap-6">
         
-        {/* Top Header Row (Back button & status indicators) */}
+        {/* Top Header Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div className="flex items-center gap-4 text-left">
             <button 
@@ -91,16 +113,16 @@ function WorkshopRoom({ workshop, onClose }) {
           </div>
         </div>
 
-        {/* Workspace Split Layout: Video Visualizer (8 cols) and Live Chat / Tip Widget (4 cols) */}
+        {/* Workspace Split Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          {/* Left Column: Simulated Stream Player (8 cols) */}
+          {/* Left Column: Simulated Stream Player */}
           <div className="lg:col-span-8 flex flex-col gap-4">
             
             {/* Live stream player container */}
             <div className="h-[360px] md:h-[480px] bg-gradient-to-b from-[#A91D3A]/10 to-[#0F0F0F] rounded-[2rem] border border-white/10 flex flex-col justify-between p-6 relative overflow-hidden select-none alpana-texture">
               
-              {/* Dynamic decorative canvas/visualizer representation */}
+              {/* Dynamic decorative canvas/visualizer */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-64 h-64 rounded-full bg-gradient-to-tr from-[#C76B29]/20 to-[#A91D3A]/20 flex items-center justify-center border border-white/5 animate-pulse relative">
                   <span className="text-8xl filter drop-shadow-2xl">🏺</span>
@@ -110,7 +132,7 @@ function WorkshopRoom({ workshop, onClose }) {
                 </div>
               </div>
 
-              {/* Status Row inside player */}
+              {/* Status Row */}
               <div className="flex justify-between items-start z-10">
                 <span className="bg-black/60 border border-white/10 text-white rounded px-2.5 py-1 text-[10px] font-mono flex items-center gap-1.5 uppercase tracking-wider">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
@@ -119,7 +141,7 @@ function WorkshopRoom({ workshop, onClose }) {
                 <span className="text-[10px] font-mono text-white/50">Audio: Dialect Translate Active (EN)</span>
               </div>
 
-              {/* Absolute bottom: controls overlay */}
+              {/* Controls overlay */}
               <div className="z-10 bg-black/60 border border-white/5 p-4 rounded-xl flex items-center justify-between font-body text-xs text-white">
                 <div className="flex items-center gap-3">
                   <button className="text-white hover:text-[#C76B29] transition-colors">
@@ -144,7 +166,7 @@ function WorkshopRoom({ workshop, onClose }) {
 
           </div>
 
-          {/* Right Column: Tips & Chat Panel (4 cols) */}
+          {/* Right Column: Tips & Chat Panel */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             
             {/* 1. TIP & DONATION WIDGET */}
@@ -241,4 +263,4 @@ function WorkshopRoom({ workshop, onClose }) {
   );
 }
 
-window.WorkshopRoom = WorkshopRoom;
+export default WorkshopRoom;

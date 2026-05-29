@@ -1,6 +1,6 @@
-function About() {
-  const { motion } = window.Motion;
+import { motion } from "framer-motion";
 
+function About() {
   const timelineItems = [
     {
       year: "Ancient Roots",
@@ -171,7 +171,7 @@ function About() {
         </div>
 
         {/* 4. FOOTER */}
-        <footer className="w-full border-t border-white/5 pt-12 pb-6 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#F4EDE4]/50 font-body border-box">
+        <footer className="w-full border-t border-white/5 pt-12 pb-6 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#F4EDE4]/50 font-body">
           <div className="text-left">
             <span className="font-heading italic text-lg text-white">KaruVerse</span>
             <p className="mt-1 text-[10px] font-light">
@@ -194,4 +194,4 @@ function About() {
   );
 }
 
-window.About = About;
+export default About;

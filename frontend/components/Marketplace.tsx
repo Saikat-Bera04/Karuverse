@@ -1,12 +1,30 @@
-const { useState, useMemo } = React;
+import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 
-function Marketplace({ products, setSelectedProduct, setCurrentPage }) {
-  const { motion } = window.Motion;
+interface Product {
+  id: string;
+  name: string;
+  craftType: string;
+  region: string;
+  artisan: string;
+  price: number;
+  desc: string;
+  emoji: string;
+  nftVerified: boolean;
+  storySnippet?: string;
+}
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCraft, setSelectedCraft] = useState("all");
-  const [selectedRegion, setSelectedRegion] = useState("all");
-  const [onlyVerified, setOnlyVerified] = useState(false);
+interface MarketplaceProps {
+  products: Product[];
+  setSelectedProduct: (product: Product | null) => void;
+  setCurrentPage: (page: string) => void;
+}
+
+function Marketplace({ products, setSelectedProduct, setCurrentPage }: MarketplaceProps) {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCraft, setSelectedCraft] = useState<string>("all");
+  const [selectedRegion, setSelectedRegion] = useState<string>("all");
+  const [onlyVerified, setOnlyVerified] = useState<boolean>(false);
 
   const craftCategories = [
     { id: "all", label: "All Crafts" },
@@ -54,25 +72,15 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }) {
         {/* Marketplace Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="text-left max-w-xl">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.8 }}
-              className="text-xs font-body text-[#C76B29] uppercase tracking-widest mb-3"
-            >
+            <div className="text-xs font-body text-[#C76B29] uppercase tracking-widest mb-3">
               // Peer-To-Peer Cultural Trade
-            </motion.div>
-            <motion.h2 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="font-heading italic text-5xl md:text-6xl text-white tracking-tight leading-none"
-            >
+            </div>
+            <h2 className="font-heading italic text-5xl md:text-6xl text-white tracking-tight leading-none">
               Artisan Marketplace
-            </motion.h2>
-            <motion.p 
-              className="text-[#F4EDE4]/60 font-body font-light text-xs md:text-sm mt-3"
-            >
+            </h2>
+            <p className="text-[#F4EDE4]/60 font-body font-light text-xs md:text-sm mt-3">
               Buy direct from national-award winning master artisans. Every purchase routes 95% of capital directly into their local bank accounts, logged on the ledger.
-            </motion.p>
+            </p>
           </div>
 
           {/* Quick Dashboard link */}
@@ -177,11 +185,11 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }) {
                 onClick={() => setSelectedProduct(prod)}
               >
                 
-                {/* Visual Image container (custom SVG/CSS illustration) */}
+                {/* Visual Image container */}
                 <div className="h-52 bg-gradient-to-b from-white/2 to-white/5 rounded-[1.5rem] border border-white/5 flex items-center justify-center text-6xl relative overflow-hidden shrink-0 select-none">
                   {prod.emoji}
                   
-                  {/* Web3 verified tag inside top-right */}
+                  {/* Web3 verified tag */}
                   {prod.nftVerified && (
                     <span className="absolute top-3 right-3 bg-green-500/10 text-green-400 border border-green-500/25 px-2 py-0.5 rounded text-[8px] font-mono font-semibold uppercase tracking-wider">
                       NFT SECURED
@@ -192,7 +200,7 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }) {
                   <div className="absolute inset-0 opacity-5 bg-repeat" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23FFF' fill-opacity='1' d='M20 0 L40 20 L20 40 L0 20 Z'/%3E%3C/svg%3E")` }}></div>
                 </div>
 
-                {/* Info Text details */}
+                {/* Info details */}
                 <div className="flex-1 mt-4 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center">
@@ -243,4 +251,4 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }) {
   );
 }
 
-window.Marketplace = Marketplace;
+export default Marketplace;

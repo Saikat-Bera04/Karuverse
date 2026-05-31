@@ -12,6 +12,8 @@ import Marketplace from "@/components/Marketplace";
 import Dashboard from "@/components/Dashboard";
 import WorkshopRoom from "@/components/WorkshopRoom";
 import ProductDetail from "@/components/ProductDetail";
+import SignIn from "@/components/SignIn";
+import SignUp from "@/components/SignUp";
 
 interface Product {
   id: string;
@@ -43,6 +45,57 @@ interface Workshop {
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<string>("landing");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
+
+  // Load session from localStorage on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem("karuverse_jwt");
+    const savedUser = localStorage.getItem("karuverse_user");
+
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      try {
+        setUser(JSON.parse(savedUser));
+        
+        // Check active session validity on backend
+        fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            "Authorization": `Bearer ${savedToken}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.user) {
+            setUser(data.user);
+            localStorage.setItem("karuverse_user", JSON.stringify(data.user));
+          } else {
+            handleLogout();
+          }
+        })
+        .catch(() => {
+          console.log("Backend offline, preserving local storage session");
+        });
+      } catch (e) {
+        console.error("Failed to parse saved user", e);
+      }
+    }
+  }, []);
+
+  const handleLoginSuccess = (newToken: string, newUser: any) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem("karuverse_jwt", newToken);
+    localStorage.setItem("karuverse_user", JSON.stringify(newUser));
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("karuverse_jwt");
+    localStorage.removeItem("karuverse_user");
+  };
   
   // Active workshop state (initialized with first active pottery workshop)
   const [activeWorkshop, setActiveWorkshop] = useState<Workshop>({
@@ -169,6 +222,8 @@ export default function Home() {
       <Navbar 
         currentPage={currentPage} 
         setCurrentPage={setCurrentPage} 
+        user={user}
+        onLogout={handleLogout}
       />
 
       {/* 2. Main SPA Route Swapping */}
@@ -220,6 +275,20 @@ export default function Home() {
           <WorkshopRoom 
             workshop={activeWorkshop} 
             onClose={() => setCurrentPage("landing")}
+          />
+        )}
+
+        {currentPage === "signin" && (
+          <SignIn 
+            onLoginSuccess={handleLoginSuccess}
+            setCurrentPage={setCurrentPage}
+          />
+        )}
+
+        {currentPage === "signup" && (
+          <SignUp 
+            onLoginSuccess={handleLoginSuccess}
+            setCurrentPage={setCurrentPage}
           />
         )}
       </div>

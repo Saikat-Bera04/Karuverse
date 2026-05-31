@@ -55,7 +55,6 @@ export const walletConnect = asyncHandler(async (req, res) => {
   const token = signToken(user);
   res.json({ success: true, token, user });
 });
-
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, user: req.user });
 });

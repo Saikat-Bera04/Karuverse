@@ -3,23 +3,23 @@ import { useState } from "react";
 interface NavbarProps {
   currentPage: string;
   setCurrentPage: (page: string) => void;
+  user: any;
+  onLogout: () => void;
 }
 
-function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
+function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const simulateWalletConnect = () => {
     if (walletAddress) {
-      // Disconnect
       setWalletAddress(null);
       return;
     }
     
     setIsConnecting(true);
     setTimeout(() => {
-      // Generate a mock Ethereum/Polygon address
       const randomAddress = "0x" + Array.from({length: 40}, () => 
         Math.floor(Math.random() * 16).toString(16)
       ).join("");
@@ -35,7 +35,7 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
     { id: "marketplace", label: "Marketplace" },
     { id: "workshop", label: "Workshops" },
     { id: "about", label: "About Mission" },
-    { id: "dashboard", label: "Artisan Hub" }
+    ...(user && user.role === "artisan" ? [{ id: "dashboard", label: "Artisan Hub" }] : [])
   ];
 
   return (
@@ -47,7 +47,11 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
           onClick={() => setCurrentPage("landing")}
           className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center cursor-pointer select-none hover:scale-105 transition-transform duration-300 z-50"
         >
-          <span className="font-heading text-2xl italic text-[#F6C453] tracking-tighter">k</span>
+          <img 
+            src="/logo.png" 
+            alt="KaruVerse Logo" 
+            className="w-8 h-8 object-contain rounded-full"
+          />
         </div>
 
         {/* Center (desktop only): liquid-glass pill holding text links */}
@@ -101,6 +105,41 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
           </button>
         </div>
 
+        {/* Right (desktop only): Authentication options */}
+        <div className="hidden md:flex items-center gap-2">
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/70 font-body px-2 py-1">
+                Hi, <span className="font-semibold text-white">{user.name.split(" ")[0]}</span>
+              </span>
+              <button
+                onClick={() => {
+                  onLogout();
+                  setCurrentPage("landing");
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-full bg-[#A91D3A]/20 hover:bg-[#A91D3A]/40 text-white border border-[#A91D3A]/30 transition-all duration-300"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage("signin")}
+                className="px-4 py-2 text-xs font-semibold rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all duration-300"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setCurrentPage("signup")}
+                className="px-4 py-2 text-xs font-semibold rounded-full bg-[#C76B29] hover:bg-[#C76B29]/80 text-white transition-all duration-300"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Hamburger Menu Icon (Mobile Only) */}
         <div className="md:hidden z-50">
           <button
@@ -121,9 +160,6 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
             )}
           </button>
         </div>
-
-        {/* Right: 48x48 invisible spacer to balance logo */}
-        <div className="hidden md:block w-12 h-12"></div>
 
       </div>
 
@@ -147,6 +183,49 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
               {link.label}
             </button>
           ))}
+          
+          {/* Mobile Auth Drawer */}
+          <div className="border-t border-white/10 pt-3 flex flex-col gap-2">
+            {user ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-xs text-center text-white/70 py-1">
+                  Signed in as <span className="font-semibold text-[#F6C453]">{user.name}</span>
+                </span>
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setMobileMenuOpen(false);
+                    setCurrentPage("landing");
+                  }}
+                  className="w-full py-2.5 text-center text-xs font-semibold rounded-full bg-[#A91D3A]/20 border border-[#A91D3A]/30 text-white"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setCurrentPage("signin");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex-1 py-2.5 text-center text-xs font-semibold rounded-full bg-white/5 border border-white/10 text-white"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentPage("signup");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex-1 py-2.5 text-center text-xs font-semibold rounded-full bg-[#C76B29] text-white"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
+
           <button 
             onClick={() => {
               simulateWalletConnect();

@@ -1,9 +1,4 @@
-import openai from "../config/ai";
-
-const model = "gpt-4.1-mini";
-
-const getText = (response: { choices: Array<{ message?: { content?: string | null } }> }) =>
-  response.choices[0]?.message?.content?.trim() || "";
+import genAI from "../config/ai";
 
 export const generateProductDescription = async (input: {
   title: string;
@@ -11,22 +6,15 @@ export const generateProductDescription = async (input: {
   language?: string;
   district?: string;
 }) => {
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You write warm, trustworthy marketplace copy for handmade Indian artisan products. Keep it culturally respectful and concise."
-      },
-      {
-        role: "user",
-        content: `Create a product description in ${input.language || "English"} for "${input.title}", craft type ${input.craftType}, district ${input.district || "unknown"}.`
-      }
-    ]
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: "You write warm, trustworthy marketplace copy for handmade Indian artisan products. Keep it culturally respectful and concise."
   });
 
-  return getText(response);
+  const result = await model.generateContent(
+    `Create a product description in ${input.language || "English"} for "${input.title}", craft type ${input.craftType}, district ${input.district || "unknown"}.`
+  );
+  return result.response.text().trim();
 };
 
 export const generateStory = async (input: {
@@ -37,34 +25,23 @@ export const generateStory = async (input: {
   district?: string;
   language?: string;
 }) => {
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You create short cultural storytelling scripts for artisan products, suitable for a Hear the Story button."
-      },
-      {
-        role: "user",
-        content: JSON.stringify(input)
-      }
-    ]
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: "You create short cultural storytelling scripts for artisan products, suitable for a Hear the Story button."
   });
 
-  return getText(response);
+  const result = await model.generateContent(JSON.stringify(input));
+  return result.response.text().trim();
 };
 
 export const translateText = async (text: string, language: string) => {
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      { role: "system", content: "Translate faithfully while preserving artisan and craft context." },
-      { role: "user", content: `Translate to ${language}: ${text}` }
-    ]
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: "Translate faithfully while preserving artisan and craft context."
   });
 
-  return getText(response);
+  const result = await model.generateContent(`Translate to ${language}: ${text}`);
+  return result.response.text().trim();
 };
 
 export const suggestPrice = async (input: {
@@ -73,18 +50,17 @@ export const suggestPrice = async (input: {
   category: string;
   baseCurrency?: string;
 }) => {
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content:
-          "Suggest a fair artisan marketplace price. Return compact JSON with minPrice, maxPrice, recommendedPrice, currency, and reasoning."
-      },
-      { role: "user", content: JSON.stringify({ baseCurrency: "INR", ...input }) }
-    ],
-    response_format: { type: "json_object" }
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: "Suggest a fair artisan marketplace price. Return compact JSON with minPrice, maxPrice, recommendedPrice, currency, and reasoning."
   });
 
-  return getText(response);
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: JSON.stringify({ baseCurrency: "INR", ...input }) }] }],
+    generationConfig: {
+      responseMimeType: "application/json"
+    }
+  });
+
+  return result.response.text().trim();
 };

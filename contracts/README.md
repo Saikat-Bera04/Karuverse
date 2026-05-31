@@ -16,3 +16,4 @@ Deploy it to Celo Sepolia with:
 - `PRIVATE_KEY=<celo-sepolia-funded-private-key>`
 
 After deployment, set `NFT_CONTRACT_ADDRESS` in `backend/.env`.
+contract address :-....

@@ -47,7 +47,11 @@ function Navbar({ currentPage, setCurrentPage }: NavbarProps) {
           onClick={() => setCurrentPage("landing")}
           className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center cursor-pointer select-none hover:scale-105 transition-transform duration-300 z-50"
         >
-          <span className="font-heading text-2xl italic text-[#F6C453] tracking-tighter">k</span>
+          <img 
+            src="/logo.png" 
+            alt="KaruVerse Logo" 
+            className="w-8 h-8 object-contain rounded-full"
+          />
         </div>
 
         {/* Center (desktop only): liquid-glass pill holding text links */}

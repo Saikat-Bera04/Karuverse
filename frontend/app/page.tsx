@@ -60,7 +60,7 @@ export default function Home() {
         setUser(JSON.parse(savedUser));
         
         // Check active session validity on backend
-        fetch("http://localhost:5000/api/auth/me", {
+        fetch("http://localhost:5001/api/auth/me", {
           headers: {
             "Authorization": `Bearer ${savedToken}`
           }

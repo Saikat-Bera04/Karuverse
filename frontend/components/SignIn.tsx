@@ -25,7 +25,7 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
     setShowMockOption(false);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch("http://localhost:5001/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -44,7 +44,7 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
     } catch (err: any) {
       console.error("Login connection failed: ", err);
       if (err.message.includes("Failed to fetch") || err.message.includes("fetch")) {
-        setError("Local MongoDB backend (port 5000) is offline.");
+        setError("Local MongoDB backend (port 5001) is offline.");
         setShowMockOption(true);
       } else {
         setError(err.message || "Incorrect email or password.");

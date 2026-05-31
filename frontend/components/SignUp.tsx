@@ -43,7 +43,7 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch("http://localhost:5001/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -62,7 +62,7 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
     } catch (err: any) {
       console.error("Registration connection failed: ", err);
       if (err.message.includes("Failed to fetch") || err.message.includes("fetch")) {
-        setError("Local MongoDB backend (port 5000) is offline.");
+        setError("Local MongoDB backend (port 5001) is offline.");
         setShowMockOption(true);
       } else {
         setError(err.message || "An error occurred during registration.");

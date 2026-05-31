@@ -16,16 +16,24 @@ import SignIn from "@/components/SignIn";
 import SignUp from "@/components/SignUp";
 
 interface Product {
-  id: string;
-  name: string;
-  craftType: string;
-  region: string;
-  artisan: string;
+  _id?: string;
+  id?: string;
+  title?: string;
+  name?: string;
+  category?: string;
+  craftType?: string;
+  district?: string;
+  region?: string;
+  artisan?: any;
   price: number;
-  desc: string;
-  emoji: string;
-  nftVerified: boolean;
+  description?: string;
+  desc?: string;
+  emoji?: string;
+  nftTokenId?: string;
+  nftVerified?: boolean;
+  isVerified?: boolean;
   storySnippet?: string;
+  images?: string[];
 }
 
 interface Workshop {
@@ -112,95 +120,36 @@ export default function Home() {
     participants: "89 Watching"
   });
 
-  // Global products state initialized with premium seed items
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: "48201",
-      name: "Phulia Jamdani Cotton Saree",
-      craftType: "handloom",
-      region: "Nadia",
-      artisan: "Biren Basak",
-      price: 240,
-      desc: "Handwoven in Nadia using pure fine counts of organic cotton. Each motif is meticulously inserted by hand under supplementary weft counting, a legacy passed down five generations of the Basak weavers family.",
-      emoji: "🧵",
-      nftVerified: true,
-      storySnippet: "Meticulously supplementary hand-woven saree representing heritage loom patterns."
-    },
-    {
-      id: "11283",
-      name: "Long-Neck Terracotta Horse",
-      craftType: "terracotta",
-      region: "Bankura",
-      artisan: "Madan Karmakar",
-      price: 150,
-      desc: "Thrown in Panchmura village from Bankura's red terracotta clay. Renowned for its distinctive long hollow neck and high ears, it is a traditional symbol of West Bengal folk clay craftsmanship.",
-      emoji: "🏺",
-      nftVerified: true,
-      storySnippet: "Shaped in Bankura's red terracotta clay, carrying ancient regional signatures."
-    },
-    {
-      id: "99042",
-      name: "Dokra Brass Nataraja Collectible",
-      craftType: "dokra",
-      region: "Burdwan",
-      artisan: "Haripada Dhibar",
-      price: 380,
-      desc: "Crafted using the non-reusable lost-wax brass casting process in Burdwan district. Due to the destruction of the wax model, every single brass collectible is an absolute one-of-a-kind unique masterpiece.",
-      emoji: "🏺",
-      nftVerified: true,
-      storySnippet: "Unique lost-wax metal sculpture carrying ancient regional metalcraft signatures."
-    },
-    {
-      id: "33891",
-      name: "Alpana Hand-Painted Wooden Plates",
-      craftType: "alpana",
-      region: "Shantiniketan",
-      artisan: "Swarna Chitrakar",
-      price: 45,
-      desc: "A set of premium wood plates decorated in Shantiniketan using sacred traditional Alpana white slip motifs. Designed to protect tables while introducing auspicious folk geometry to modern spaces.",
-      emoji: "🎨",
-      nftVerified: false,
-      storySnippet: "Decorated in Shantiniketan using sacred folk Alpana geometry motifs."
-    },
-    {
-      id: "54201",
-      name: "Birbhum Bamboo Folk Ektara",
-      craftType: "instruments",
-      region: "Birbhum",
-      artisan: "Sanatan Das Baul",
-      price: 95,
-      desc: "A single-string folk lute crafted from local dry gourds, leather skin, and split bamboo in Birbhum. Delivers the authentic resonant frequency of wandering spiritual Baul folk singers.",
-      emoji: "🎸",
-      nftVerified: true,
-      storySnippet: "Resonant single-string folk lute hand-tuned for spiritual Baul melodies."
-    }
-  ]);
+  // Global products state
+  const [products, setProducts] = useState<Product[]>([]);
 
-  // Load user added products from LocalStorage if available
+  // Fetch products from backend
   useEffect(() => {
-    const saved = localStorage.getItem("karuverse_user_products");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as Product[];
-        setProducts((prev) => {
-          // Prevent duplicates by checking ids
-          const existingIds = prev.map((p) => p.id);
-          const uniqueNew = parsed.filter((p) => !existingIds.includes(p.id));
-          return [...prev, ...uniqueNew];
-        });
-      } catch (e) {
-        console.error("Failed to parse local crafts products:", e);
-      }
-    }
+    fetch("http://localhost:5001/api/products")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.products) {
+          // Map backend fields to frontend fields for compatibility
+          const mapped = data.products.map((p: any) => ({
+            ...p,
+            id: p._id,
+            name: p.title || p.name,
+            craftType: p.category || p.craftType,
+            region: p.district || p.region,
+            artisan: p.artisan?.name || p.artisan || "Unknown Artisan",
+            desc: p.description || p.desc,
+            nftVerified: p.isVerified || p.nftVerified,
+            emoji: p.category === "handloom" ? "🧵" : p.category === "alpana" ? "🎨" : p.category === "instruments" ? "🎸" : "🏺"
+          }));
+          setProducts(mapped);
+        }
+      })
+      .catch(e => console.error("Failed to fetch products:", e));
   }, []);
 
   // Save new products helper
   const addProduct = (newProduct: Product) => {
-    setProducts((prev) => {
-      const updated = [...prev, newProduct];
-      localStorage.setItem("karuverse_user_products", JSON.stringify(updated.filter(p => !["48201", "11283", "99042", "33891", "54201"].includes(p.id))));
-      return updated;
-    });
+    setProducts((prev) => [...prev, newProduct]);
   };
 
   // Suppression wrapper for harmless framer motion warnings

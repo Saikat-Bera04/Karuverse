@@ -11,6 +11,7 @@ import nftRoutes from "./routes/nftRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import productRoutes from "./routes/productRoutes";
 import workshopRoutes from "./routes/workshopRoutes";
+import uploadRoutes from "./routes/uploadRoutes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 
 const app = express();
@@ -54,6 +55,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/nft", nftRoutes);
 app.use("/api/workshops", workshopRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

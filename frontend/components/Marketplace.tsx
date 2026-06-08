@@ -1,18 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 
-interface Product {
-  id: string;
-  name: string;
-  craftType: string;
-  region: string;
-  artisan: string;
-  price: number;
-  desc: string;
-  emoji: string;
-  nftVerified: boolean;
-  storySnippet?: string;
-}
+import { Product } from "@/types/product";
 
 interface MarketplaceProps {
   products: Product[];

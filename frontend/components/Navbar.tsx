@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 interface NavbarProps {
   currentPage: string;
   setCurrentPage: (page: string) => void;
@@ -8,27 +8,8 @@ interface NavbarProps {
 }
 
 function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  const simulateWalletConnect = () => {
-    if (walletAddress) {
-      setWalletAddress(null);
-      return;
-    }
-    
-    setIsConnecting(true);
-    setTimeout(() => {
-      const randomAddress = "0x" + Array.from({length: 40}, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-      
-      const formatted = `${randomAddress.substring(0, 6)}...${randomAddress.substring(38)}`;
-      setWalletAddress(formatted);
-      setIsConnecting(false);
-    }, 1200);
-  };
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const navLinks = [
     { id: "landing", label: "Home" },
@@ -75,34 +56,10 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
               </button>
             );
           })}
-          
-          {/* Claim a Spot / Connect Wallet CTA inside pill */}
-          <button 
-            onClick={simulateWalletConnect}
-            className="ml-2 bg-[#F4EDE4] text-black px-4 py-2 text-sm font-semibold rounded-full flex items-center gap-1 hover:bg-[#C76B29] hover:text-white transition-all duration-300 whitespace-nowrap"
-          >
-            {isConnecting ? (
-              <span className="flex items-center gap-1.5">
-                <svg className="animate-spin h-3.5 w-3.5 text-current" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Syncing...
-              </span>
-            ) : walletAddress ? (
-              <span className="flex items-center gap-1 text-[#A91D3A]">
-                Connected: {walletAddress}
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                Connect Wallet
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="7" y1="17" x2="17" y2="7"></line>
-                  <polyline points="7 7 17 7 17 17"></polyline>
-                </svg>
-              </span>
-            )}
-          </button>
+          {/* RainbowKit Connect Button */}
+          <div className="ml-2">
+            <ConnectButton />
+          </div>
         </div>
 
         {/* Right (desktop only): Authentication options */}
@@ -226,27 +183,9 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
             )}
           </div>
 
-          <button 
-            onClick={() => {
-              simulateWalletConnect();
-              setMobileMenuOpen(false);
-            }}
-            className="w-full bg-[#F4EDE4] text-black py-2.5 text-sm font-semibold rounded-full flex items-center justify-center gap-1"
-          >
-            {isConnecting ? (
-              <span>Syncing Wallet...</span>
-            ) : walletAddress ? (
-              <span className="text-[#A91D3A]">Disconnect Wallet ({walletAddress})</span>
-            ) : (
-              <span className="flex items-center gap-1">
-                Connect Wallet
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="7" y1="17" x2="17" y2="7"></line>
-                  <polyline points="7 7 17 7 17 17"></polyline>
-                </svg>
-              </span>
-            )}
-          </button>
+          <div className="w-full flex justify-center mt-2">
+            <ConnectButton />
+          </div>
         </div>
       )}
     </nav>

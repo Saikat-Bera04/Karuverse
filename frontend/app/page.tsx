@@ -15,26 +15,7 @@ import ProductDetail from "@/components/ProductDetail";
 import SignIn from "@/components/SignIn";
 import SignUp from "@/components/SignUp";
 
-interface Product {
-  _id?: string;
-  id?: string;
-  title?: string;
-  name?: string;
-  category?: string;
-  craftType?: string;
-  district?: string;
-  region?: string;
-  artisan?: any;
-  price: number;
-  description?: string;
-  desc?: string;
-  emoji?: string;
-  nftTokenId?: string;
-  nftVerified?: boolean;
-  isVerified?: boolean;
-  storySnippet?: string;
-  images?: string[];
-}
+import { Product } from "@/types/product";
 
 interface Workshop {
   id: string;

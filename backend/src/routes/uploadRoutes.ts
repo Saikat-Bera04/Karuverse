@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { protect } from "../middleware/auth";
-import cloudinary from "../config/cloudinary";
+import { uploadFileToPinata } from "../services/ipfsService";
 import { ApiError } from "../utils/apiError";
 import { asyncHandler } from "../utils/asyncHandler";
 
@@ -30,19 +30,12 @@ router.post(
       throw new ApiError(400, "No image provided");
     }
 
-    // Upload to Cloudinary using upload_stream
-    const b64 = Buffer.from(req.file.buffer).toString("base64");
-    const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: "karuverse",
-      resource_type: "auto"
-    });
+    const result = await uploadFileToPinata(req.file.buffer, req.file.originalname);
 
     res.json({
       success: true,
-      secure_url: result.secure_url,
-      public_id: result.public_id
+      secure_url: result.gatewayUrl,
+      public_id: result.cid
     });
   })
 );

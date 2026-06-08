@@ -1,7 +1,7 @@
 import { Poppins, Instrument_Serif, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import React from "react";
-
+import { Providers } from "./Providers";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -42,7 +42,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${instrumentSerif.variable} ${cormorantGaramond.variable}`}>
       <body className="bg-[#0F0F0F] text-[#F4EDE4] antialiased">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

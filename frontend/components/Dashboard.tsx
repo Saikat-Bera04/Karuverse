@@ -1,25 +1,6 @@
 import { useState, FormEvent, useRef } from "react";
 
-interface Product {
-  _id?: string;
-  id?: string;
-  title?: string;
-  name?: string;
-  category?: string;
-  craftType?: string;
-  district?: string;
-  region?: string;
-  artisan?: any;
-  price: number;
-  description?: string;
-  desc?: string;
-  emoji?: string;
-  nftTokenId?: string;
-  nftVerified?: boolean;
-  isVerified?: boolean;
-  storySnippet?: string;
-  images?: string[];
-}
+import { Product } from "@/types/product";
 
 interface DashboardProps {
   addProduct: (product: Product) => void;
@@ -215,14 +196,20 @@ function Dashboard({ addProduct }: DashboardProps) {
 
     const newCraftProduct: Product = {
       _id: createdProductId,
+      id: createdProductId,
       title: name,
+      name: name,
       category: craftType,
+      craftType: craftType,
       district: region,
+      region: region,
       artisan: artisan,
       price: price,
       description: aiStory,
+      desc: aiStory,
       emoji: emoji,
       isVerified: true,
+      nftVerified: true,
       nftTokenId: mintedResult.tokenId.toString(),
       images: imageUrl ? [imageUrl] : []
     };

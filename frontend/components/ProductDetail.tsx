@@ -2,19 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Script from "next/script";
 
-interface Product {
-  id: string;
-  name: string;
-  craftType: string;
-  region: string;
-  artisan: string;
-  price: number;
-  desc: string;
-  emoji: string;
-  nftVerified: boolean;
-  storySnippet?: string;
-  images?: string[];
-}
+import { Product } from "@/types/product";
 
 interface ProductDetailProps {
   product: Product | null;

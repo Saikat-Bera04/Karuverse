@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+import { apiFetch } from "@/lib/api";
 interface NavbarProps {
   currentPage: string;
   setCurrentPage: (page: string) => void;
@@ -10,6 +12,27 @@ interface NavbarProps {
 function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const { address, isConnected } = useAccount();
+
+  useEffect(() => {
+    if (!isConnected || !address) return;
+
+    apiFetch<{ success: boolean; token: string; user: any }>("/api/auth/wallet-connect", {
+      method: "POST",
+      body: JSON.stringify({
+        walletAddress: address,
+        name: user?.name,
+        role: user?.role || "buyer"
+      })
+    })
+      .then((data) => {
+        if (data.success) {
+          localStorage.setItem("karuverse_jwt", data.token);
+          localStorage.setItem("karuverse_user", JSON.stringify(data.user));
+        }
+      })
+      .catch((error) => console.error("Wallet sync failed", error));
+  }, [address, isConnected, user?.name, user?.role]);
 
   const navLinks = [
     { id: "landing", label: "Home" },
@@ -29,7 +52,7 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
           className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center cursor-pointer select-none hover:scale-105 transition-transform duration-300 z-50"
         >
           <img 
-            src="/logo.png" 
+            src="/karuverse-logo.png" 
             alt="KaruVerse Logo" 
             className="w-8 h-8 object-contain rounded-full"
           />

@@ -6,6 +6,7 @@ const WorkshopSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     meetingLink: String,
+    livekitRoomName: { type: String, index: true },
     thumbnail: String,
     startTime: { type: Date, required: true, index: true },
     ticketPrice: { type: Number, default: 0 },

@@ -35,6 +35,7 @@ export const uploadFileToPinata = async (fileBuffer: Buffer, originalName: strin
   const cid = response.data.IpfsHash;
   return {
     cid,
+    ipfsUri: `ipfs://${cid}`,
     gatewayUrl: `https://gateway.pinata.cloud/ipfs/${cid}`
   };
 };

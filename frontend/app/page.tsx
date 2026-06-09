@@ -16,19 +16,26 @@ import SignIn from "@/components/SignIn";
 import SignUp from "@/components/SignUp";
 
 import { Product } from "@/types/product";
+import { apiFetch, API_URL } from "@/lib/api";
+import { mapProduct } from "@/lib/productMapper";
 
 interface Workshop {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
-  artisan: string;
-  village: string;
-  type: string;
-  status: string;
-  badgeColor: string;
-  image: string;
-  desc: string;
-  time: string;
-  participants: string;
+  artisan?: any;
+  village?: string;
+  type?: string;
+  craftType?: string;
+  status?: string;
+  badgeColor?: string;
+  image?: string;
+  desc?: string;
+  description?: string;
+  time?: string;
+  participants?: string;
+  livekitRoomName?: string;
+  meetingLink?: string;
 }
 
 export default function Home() {
@@ -49,7 +56,7 @@ export default function Home() {
         setUser(JSON.parse(savedUser));
         
         // Check active session validity on backend
-        fetch("http://localhost:5001/api/auth/me", {
+        fetch(`${API_URL}/api/auth/me`, {
           headers: {
             "Authorization": `Bearer ${savedToken}`
           }
@@ -86,43 +93,17 @@ export default function Home() {
     localStorage.removeItem("karuverse_user");
   };
   
-  // Active workshop state (initialized with first active pottery workshop)
-  const [activeWorkshop, setActiveWorkshop] = useState<Workshop>({
-    id: "weaving",
-    title: "Traditional Jamdani Weaving",
-    artisan: "Biren Basak",
-    village: "Phulia, Nadia District",
-    type: "Handloom Weaving",
-    status: "ACTIVE",
-    badgeColor: "bg-red-500",
-    image: "🧵",
-    desc: "Observe the complex supplementary weft hand-weaving process. Ask questions about counting threads and matching structural patterns.",
-    time: "Started 25 mins ago",
-    participants: "89 Watching"
-  });
+  const [activeWorkshop, setActiveWorkshop] = useState<Workshop | null>(null);
 
   // Global products state
   const [products, setProducts] = useState<Product[]>([]);
 
   // Fetch products from backend
   useEffect(() => {
-    fetch("http://localhost:5001/api/products")
-      .then(res => res.json())
+    apiFetch<{ success: boolean; products: any[] }>("/api/products")
       .then(data => {
         if (data.success && data.products) {
-          // Map backend fields to frontend fields for compatibility
-          const mapped = data.products.map((p: any) => ({
-            ...p,
-            id: p._id,
-            name: p.title || p.name,
-            craftType: p.category || p.craftType,
-            region: p.district || p.region,
-            artisan: p.artisan?.name || p.artisan || "Unknown Artisan",
-            desc: p.description || p.desc,
-            nftVerified: p.isVerified || p.nftVerified,
-            emoji: p.category === "handloom" ? "🧵" : p.category === "alpana" ? "🎨" : p.category === "instruments" ? "🎸" : "🏺"
-          }));
-          setProducts(mapped);
+          setProducts(data.products.map(mapProduct));
         }
       })
       .catch(e => console.error("Failed to fetch products:", e));
@@ -198,6 +179,7 @@ export default function Home() {
         {currentPage === "dashboard" && (
           <Dashboard 
             addProduct={addProduct}
+            user={user}
           />
         )}
 

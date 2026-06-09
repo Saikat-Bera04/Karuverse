@@ -4,12 +4,11 @@ import { motion } from "framer-motion";
 function AIFeatures() {
   const [activeFeature, setActiveFeature] = useState<number>(0);
 
-  // Translation Simulation State
   const [transInput, setTransInput] = useState<string>("এই জামদানি শাড়িটি আমাদের গ্রামে তাঁত বোনা হয়েছে।");
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [transOutput, setTransOutput] = useState<string>("");
 
-  const simulateTranslation = () => {
+  const runTranslation = () => {
     setIsTranslating(true);
     setTransOutput("");
     setTimeout(() => {
@@ -18,11 +17,10 @@ function AIFeatures() {
     }, 1500);
   };
 
-  // Pricing Assistant Simulation State
   const [hoursSpent, setHoursSpent] = useState<number>(18);
-  const [materialCost, setMaterialCost] = useState<number>(120); // in MATIC
+  const [materialCost, setMaterialCost] = useState<number>(1200);
 
-  const baseArtisanWage = 8; // MATIC per hour
+  const baseArtisanWage = 180;
   const platformFee = 0.05; // 5%
   const recommendedPrice = Math.round((hoursSpent * baseArtisanWage + materialCost) * (1 + platformFee));
 
@@ -31,7 +29,7 @@ function AIFeatures() {
       title: "AI Storytelling",
       kicker: "Connecting Hearts to Loom",
       description: "Rural artisans narrate their personal struggles and inspiration in local dialects. Our AI models analyze and transform these raw voice recordings into rich, poetic, and market-ready product narratives that speak to global collectors.",
-      demoLabel: "Creative Storytelling Demonstration",
+      panelLabel: "Creative Storytelling Tool",
       icon: (
         <svg className="w-5 h-5 text-[#C76B29]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -42,7 +40,7 @@ function AIFeatures() {
       title: "Smart Dialect Translation",
       kicker: "Breaking Language Barriers",
       description: "Direct-to-consumer commerce fails when creators cannot speak global languages. Our AI translates regional Bengali dialects (from Shantiniketan, Bankura, and Nadia) into flawless English, French, and Japanese instantly.",
-      demoLabel: "Dialect Translation Engine",
+      panelLabel: "Dialect Translation Engine",
       icon: (
         <svg className="w-5 h-5 text-[#A91D3A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 11.37 7.31 16.5 3 17" />
@@ -53,7 +51,7 @@ function AIFeatures() {
       title: "AI Pricing Assistant",
       kicker: "Guaranteeing Fair Wages",
       description: "Artisans are often exploited by middlemen due to lack of market data. KaruVerse's pricing model uses raw inputs (weaving hours, materials, logistics, and traditional complexity scores) to recommend fair-trade prices.",
-      demoLabel: "Algorithmic Pricing Matrix",
+      panelLabel: "Algorithmic Pricing Matrix",
       icon: (
         <svg className="w-5 h-5 text-[#F6C453]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -64,7 +62,7 @@ function AIFeatures() {
       title: "Personalized Storefronts",
       kicker: "Autonomous Digital Spaces",
       description: "Setting up e-commerce stores is a technical hurdle. KaruVerse automatically creates personalized, zero-maintenance web storefronts for every registered artisan, complete with integrated Web3 wallet connections and localized chat.",
-      demoLabel: "Automated Storefront Preview",
+      panelLabel: "Automated Storefront",
       icon: (
         <svg className="w-5 h-5 text-[#F4EDE4]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -174,13 +172,13 @@ function AIFeatures() {
                 </p>
               </div>
 
-              {/* Card Middle: Interactive Simulation Panel */}
+              {/* Card Middle: Interactive Tool Panel */}
               <div className="my-6 p-4 rounded-xl bg-black/40 border border-white/5 flex flex-col gap-3 font-body">
                 <div className="text-xs text-[#F4EDE4]/40 uppercase tracking-widest font-semibold">
-                  {features[activeFeature].demoLabel}
+                  {features[activeFeature].panelLabel}
                 </div>
 
-                {/* 1. Storytelling Demo */}
+                {/* 1. Storytelling Tool */}
                 {activeFeature === 0 && (
                   <div className="flex flex-col gap-2 text-xs text-[#F4EDE4]/80 italic">
                     <p className="border-l border-[#C76B29] pl-3 py-1 bg-white/2">
@@ -188,12 +186,12 @@ function AIFeatures() {
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-[#F6C453] font-normal not-italic font-sans">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
-                      AI-generated copy successfully minted on Polygon certificate ledger.
+                      AI-generated copy can be minted on the Celo certificate ledger.
                     </div>
                   </div>
                 )}
 
-                {/* 2. Translation Demo */}
+                {/* 2. Translation Tool */}
                 {activeFeature === 1 && (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2">
@@ -206,7 +204,7 @@ function AIFeatures() {
                       />
                     </div>
                     <button
-                      onClick={simulateTranslation}
+                      onClick={runTranslation}
                       disabled={isTranslating}
                       className="bg-[#A91D3A] text-white px-3 py-1.5 text-xs font-semibold rounded hover:bg-[#A91D3A]/80 transition-colors self-start flex items-center gap-1.5"
                     >
@@ -228,7 +226,7 @@ function AIFeatures() {
                   </div>
                 )}
 
-                {/* 3. Pricing Assistant Demo */}
+                {/* 3. Pricing Assistant Tool */}
                 {activeFeature === 2 && (
                   <div className="flex flex-col gap-3.5 text-xs">
                     <div className="flex flex-col gap-1.5">
@@ -249,12 +247,13 @@ function AIFeatures() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center text-[11px] text-[#F4EDE4]/60">
                         <span>Raw Material Cost:</span>
-                        <span className="font-semibold text-white">{materialCost} MATIC</span>
+                        <span className="font-semibold text-white">₹{materialCost}</span>
                       </div>
                       <input 
                         type="range" 
                         min="10" 
-                        max="500" 
+                        max="20000"
+                        step="100"
                         value={materialCost} 
                         onChange={(e) => setMaterialCost(parseInt(e.target.value))}
                         className="w-full accent-[#C76B29] cursor-pointer"
@@ -263,12 +262,12 @@ function AIFeatures() {
 
                     <div className="flex justify-between items-center pt-2 border-t border-white/10 mt-1">
                       <span className="font-medium text-[#F4EDE4]/80">Recommended Retail (100% direct):</span>
-                      <span className="text-lg font-heading italic text-[#F6C453]">{recommendedPrice} MATIC</span>
+                      <span className="text-lg font-heading italic text-[#F6C453]">₹{recommendedPrice}</span>
                     </div>
                   </div>
                 )}
 
-                {/* 4. Storefront Demo */}
+                {/* 4. Storefront Tool */}
                 {activeFeature === 3 && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0F0F0F]/60 border border-white/5">
                     <div className="w-10 h-10 rounded-full bg-[#C76B29] flex items-center justify-center text-white shrink-0 text-lg font-heading italic font-bold border border-white/15">

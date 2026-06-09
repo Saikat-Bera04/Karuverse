@@ -27,10 +27,10 @@ const cormorantGaramond = Cormorant_Garamond({
 
 export const metadata = {
   title: "KaruVerse - Preserving Bengali Heritage through AI & Web3 Provenance",
-  description: "Discover authentic Bengali craftsmanship direct from master rural creators. Secured by Polygon smart contract NFT certificates and empowered by AI storytelling and real-time dialect translation.",
-  keywords: "Bengali craftsmanship, handloom, terracotta, dokra, Shantiniketan, AI storytelling, Web3, Polygon, NFT provenance, fair trade",
+  description: "Discover authentic Bengali craftsmanship direct from master rural creators. Secured by Celo NFT certificates and empowered by AI storytelling and real-time workshops.",
+  keywords: "Bengali craftsmanship, handloom, terracotta, dokra, Shantiniketan, AI storytelling, Web3, Celo, NFT provenance, fair trade",
   icons: {
-    icon: "/logo.png",
+    icon: "/karuverse-logo.png",
   },
 };
 

@@ -128,10 +128,10 @@ function Hero({ setCurrentPage }: HeroProps) {
             </div>
             <div>
               <div className="font-heading italic text-3xl md:text-4xl text-white tracking-[-1px] leading-none">
-                340+
+                Live
               </div>
               <p className="text-[11px] text-[#F4EDE4]/60 font-body font-light mt-1.5">
-                Artisans Onboarded
+                API Connected
               </p>
             </div>
           </div>
@@ -145,10 +145,10 @@ function Hero({ setCurrentPage }: HeroProps) {
             </div>
             <div>
               <div className="font-heading italic text-3xl md:text-4xl text-white tracking-[-1px] leading-none">
-                890.5k
+                Celo
               </div>
               <p className="text-[11px] text-[#F4EDE4]/60 font-body font-light mt-1.5">
-                MATIC Circulated
+                Provenance Layer
               </p>
             </div>
           </div>
@@ -156,27 +156,7 @@ function Hero({ setCurrentPage }: HeroProps) {
 
       </div>
 
-      {/* 6. Partners Row (bottom of hero, delay 1.4s) */}
-      <motion.div 
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { filter: "blur(10px)", opacity: 0, y: 15 },
-          visible: { filter: "blur(0px)", opacity: 1, y: 0, transition: { delay: 1.4, duration: 0.6 } }
-        }}
-        className="relative z-10 flex flex-col items-center gap-4 pb-8"
-      >
-        <div className="liquid-glass rounded-full px-4 py-1 text-[11px] font-medium text-white/70 border border-white/5 uppercase tracking-widest font-body">
-          Collaborating with top heritage pioneers globally
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-12 md:gap-x-16 gap-y-2 text-2xl md:text-3xl font-heading italic text-[#F4EDE4]/60 tracking-tight">
-          <span className="hover:text-[#C76B29] transition-colors duration-300 cursor-default">Aeon Weavers</span>
-          <span className="hover:text-[#A91D3A] transition-colors duration-300 cursor-default">Vela Clay</span>
-          <span className="hover:text-[#F6C453] transition-colors duration-300 cursor-default">Apex Dokra</span>
-          <span className="hover:text-[#F4EDE4] transition-colors duration-300 cursor-default">Orbit Alpana</span>
-          <span className="hover:text-[#C76B29] transition-colors duration-300 cursor-default">Zeno Folk</span>
-        </div>
-      </motion.div>
+
 
     </section>
   );

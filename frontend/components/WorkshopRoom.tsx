@@ -34,11 +34,12 @@ interface ChatMessage {
   text: string;
 }
 
-function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
+function WorkshopRoom({ workshop: initialWorkshop, onClose }: WorkshopRoomProps) {
   const { address } = useAccount();
   const [livekitUrl, setLivekitUrl] = useState<string>("");
   const [livekitToken, setLivekitToken] = useState<string>("");
   const [connectError, setConnectError] = useState<string>("");
+  const [workshop, setWorkshop] = useState<Workshop>(initialWorkshop);
   
   // Custom states
   const [tipAmount, setTipAmount] = useState<number>(0.1);
@@ -49,25 +50,29 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
   const [newMsg, setNewMsg] = useState<string>("");
 
   useEffect(() => {
-    const workshopId = workshop._id || workshop.id;
+    const workshopId = initialWorkshop._id || initialWorkshop.id;
     if (!workshopId) {
       setConnectError("Workshop has no backend room id.");
       return;
     }
 
-    apiFetch<{ livekit: { url: string; token: string } }>(`/api/workshops/${workshopId}/join`, {
+    apiFetch<{ success: boolean; workshop: Workshop; livekit: { url: string; token: string } }>(`/api/workshops/${workshopId}/join`, {
       method: "POST"
     })
-      .then(({ livekit }) => {
-        if (!livekit.url || !livekit.token) throw new Error("LiveKit URL/token missing");
-        setLivekitUrl(livekit.url);
-        setLivekitToken(livekit.token);
+      .then((data) => {
+        // Store the full workshop data from backend (has populated artisan with walletAddress)
+        if (data.workshop) {
+          setWorkshop(data.workshop);
+        }
+        if (!data.livekit?.url || !data.livekit?.token) throw new Error("LiveKit URL/token missing from server response");
+        setLivekitUrl(data.livekit.url);
+        setLivekitToken(data.livekit.token);
       })
       .catch((error) => {
-        console.error(error);
+        console.error("Workshop join error:", error);
         setConnectError(error.message || "Could not connect to LiveKit");
       });
-  }, [workshop._id, workshop.id]);
+  }, [initialWorkshop._id, initialWorkshop.id]);
 
   const handleSendChat = (e: FormEvent) => {
     e.preventDefault();
@@ -79,8 +84,13 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
   const handleTip = async () => {
     const artisanWallet =
       typeof workshop.artisan === "object" ? workshop.artisan?.walletAddress : undefined;
-    if (!address || !artisanWallet) {
-      alert("Connect your wallet and make sure the artisan has a wallet address.");
+    
+    if (!address) {
+      alert("Please connect your Celo wallet first using the wallet button in the navigation bar.");
+      return;
+    }
+    if (!artisanWallet) {
+      alert("This artisan has not linked a wallet address yet. Tips will be available once they connect their wallet.");
       return;
     }
 
@@ -88,6 +98,10 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
     setTippedSuccess(false);
     try {
       const ethereum = (window as any).ethereum;
+      if (!ethereum) {
+        alert("No wallet extension found. Please install MetaMask or a compatible wallet.");
+        return;
+      }
       const txHash = await ethereum.request({
         method: "eth_sendTransaction",
         params: [
@@ -113,9 +127,7 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
       ? [workshop.artisan?.village, workshop.artisan?.district].filter(Boolean).join(", ")
       : workshop.village;
       
-  const savedUser = typeof window !== "undefined" ? localStorage.getItem("karuverse_user") : null;
-  const user = savedUser ? JSON.parse(savedUser) : null;
-  const isArtisan = user?.role === "artisan";
+  const canPublish = true;
 
   return (
     <section className="relative w-screen min-h-screen overflow-hidden bg-black py-24 px-6 md:px-16 lg:px-20 select-none">
@@ -172,8 +184,8 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
                 </div>
               ) : livekitUrl && livekitToken ? (
                 <LiveKitRoom
-                  video={isArtisan}
-                  audio={isArtisan}
+                  video={canPublish}
+                  audio={canPublish}
                   token={livekitToken}
                   serverUrl={livekitUrl}
                   data-lk-theme="default"

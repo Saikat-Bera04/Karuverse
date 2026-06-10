@@ -3,7 +3,7 @@ import { AccessToken } from "livekit-server-sdk";
 export const createLivekitRoomName = (title: string) =>
   `karuverse-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now()}`;
 
-export const createLivekitToken = (input: {
+export const createLivekitToken = async (input: {
   roomName: string;
   identity: string;
   name: string;
@@ -31,5 +31,5 @@ export const createLivekitToken = (input: {
     canPublishData: true
   });
 
-  return at.toJwt();
+  return await at.toJwt();
 };

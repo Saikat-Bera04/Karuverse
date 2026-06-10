@@ -9,6 +9,7 @@ const WorkshopSchema = new mongoose.Schema(
     livekitRoomName: { type: String, index: true },
     thumbnail: String,
     startTime: { type: Date, required: true, index: true },
+    endTime: { type: Date },
     ticketPrice: { type: Number, default: 0 },
     attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
   },

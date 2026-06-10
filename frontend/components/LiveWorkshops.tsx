@@ -19,6 +19,7 @@ interface Workshop {
   time?: string;
   participants?: string;
   startTime?: string;
+  endTime?: string;
   ticketPrice?: number;
   attendees?: any[];
   livekitRoomName?: string;
@@ -39,6 +40,7 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newStartTime, setNewStartTime] = useState("");
+  const [newEndTime, setNewEndTime] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -74,12 +76,13 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
     if (!newTitle.trim()) return;
     setIsCreating(true);
     try {
-      await apiFetch("/api/workshops", {
+      const data = await apiFetch<{success: boolean, workshop: Workshop}>("/api/workshops", {
         method: "POST",
         body: JSON.stringify({
           title: newTitle,
           description: newDesc,
           startTime: newStartTime ? new Date(newStartTime).toISOString() : new Date().toISOString(),
+          endTime: newEndTime ? new Date(newEndTime).toISOString() : undefined,
           status: newStartTime ? "SCHEDULED" : "ACTIVE"
         })
       });
@@ -87,7 +90,12 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
       setNewTitle("");
       setNewDesc("");
       setNewStartTime("");
+      setNewEndTime("");
       fetchWorkshops();
+      
+      if (data && data.workshop) {
+        handleJoin(data.workshop);
+      }
     } catch (err: any) {
       alert("Failed to create workshop: " + err.message);
     } finally {
@@ -291,6 +299,15 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
                   type="datetime-local" 
                   value={newStartTime}
                   onChange={(e) => setNewStartTime(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">End Date & Time (Optional)</label>
+                <input 
+                  type="datetime-local" 
+                  value={newEndTime}
+                  onChange={(e) => setNewEndTime(e.target.value)}
                   className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
                 />
               </div>

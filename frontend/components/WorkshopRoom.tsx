@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState, FormEvent } from "react";
-import { Room, RoomEvent, createLocalVideoTrack } from "livekit-client";
+import { useEffect, useState, FormEvent } from "react";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
 import { apiFetch } from "@/lib/api";
+import {
+  LiveKitRoom,
+  VideoConference,
+  RoomAudioRenderer,
+} from "@livekit/components-react";
+import "@livekit/components-styles";
 
 interface Workshop {
   _id?: string;
@@ -31,10 +36,11 @@ interface ChatMessage {
 
 function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
   const { address } = useAccount();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const roomRef = useRef<Room | null>(null);
-  const [videoStatus, setVideoStatus] = useState<string>("Connecting to workshop room...");
-  // Donation tipping states
+  const [livekitUrl, setLivekitUrl] = useState<string>("");
+  const [livekitToken, setLivekitToken] = useState<string>("");
+  const [connectError, setConnectError] = useState<string>("");
+  
+  // Custom states
   const [tipAmount, setTipAmount] = useState<number>(0.1);
   const [isTipping, setIsTipping] = useState<boolean>(false);
   const [tippedSuccess, setTippedSuccess] = useState<boolean>(false);
@@ -45,45 +51,22 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
   useEffect(() => {
     const workshopId = workshop._id || workshop.id;
     if (!workshopId) {
-      setVideoStatus("Workshop has no backend room id.");
+      setConnectError("Workshop has no backend room id.");
       return;
     }
-
-    const room = new Room();
-    roomRef.current = room;
-
-    room.on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === "video" && videoRef.current) {
-        track.attach(videoRef.current);
-        setVideoStatus("Live video connected");
-      }
-    });
 
     apiFetch<{ livekit: { url: string; token: string } }>(`/api/workshops/${workshopId}/join`, {
       method: "POST"
     })
-      .then(async ({ livekit }) => {
+      .then(({ livekit }) => {
         if (!livekit.url || !livekit.token) throw new Error("LiveKit URL/token missing");
-        await room.connect(livekit.url, livekit.token);
-        setVideoStatus("Connected. Waiting for artisan video...");
-
-        const savedUser = localStorage.getItem("karuverse_user");
-        const user = savedUser ? JSON.parse(savedUser) : null;
-        if (user?.role === "artisan") {
-          const track = await createLocalVideoTrack();
-          await room.localParticipant.publishTrack(track);
-          if (videoRef.current) track.attach(videoRef.current);
-          setVideoStatus("Publishing your camera to the room");
-        }
+        setLivekitUrl(livekit.url);
+        setLivekitToken(livekit.token);
       })
       .catch((error) => {
         console.error(error);
-        setVideoStatus(error.message || "Could not connect to LiveKit");
+        setConnectError(error.message || "Could not connect to LiveKit");
       });
-
-    return () => {
-      room.disconnect();
-    };
   }, [workshop._id, workshop.id]);
 
   const handleSendChat = (e: FormEvent) => {
@@ -129,6 +112,10 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
     typeof workshop.artisan === "object"
       ? [workshop.artisan?.village, workshop.artisan?.district].filter(Boolean).join(", ")
       : workshop.village;
+      
+  const savedUser = typeof window !== "undefined" ? localStorage.getItem("karuverse_user") : null;
+  const user = savedUser ? JSON.parse(savedUser) : null;
+  const isArtisan = user?.role === "artisan";
 
   return (
     <section className="relative w-screen min-h-screen overflow-hidden bg-black py-24 px-6 md:px-16 lg:px-20 select-none">
@@ -174,35 +161,33 @@ function WorkshopRoom({ workshop, onClose }: WorkshopRoomProps) {
         {/* Workspace Split Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          {/* Left Column: Simulated Stream Player */}
+          {/* Left Column: LiveKit Player */}
           <div className="lg:col-span-8 flex flex-col gap-4">
             
             {/* Live stream player container */}
-            <div className="h-[360px] md:h-[480px] bg-gradient-to-b from-[#A91D3A]/10 to-[#0F0F0F] rounded-[2rem] border border-white/10 flex flex-col justify-between p-6 relative overflow-hidden select-none alpana-texture">
-              <video ref={videoRef} autoPlay playsInline controls className="absolute inset-0 h-full w-full object-cover bg-black" />
-
-              {/* Status Row */}
-              <div className="flex justify-between items-start z-10">
-                <span className="bg-black/60 border border-white/10 text-white rounded px-2.5 py-1 text-[10px] font-mono flex items-center gap-1.5 uppercase tracking-wider">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
-                  {videoStatus}
-                </span>
-                <span className="text-[10px] font-mono text-white/50">Audio: Dialect Translate Active (EN)</span>
-              </div>
-
-              {/* Controls overlay */}
-              <div className="z-10 bg-black/60 border border-white/5 p-4 rounded-xl flex items-center justify-between font-body text-xs text-white">
-                <div className="flex items-center gap-3">
-                  <button className="text-white hover:text-[#C76B29] transition-colors">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
-                  </button>
-                  <span>Volume 85%</span>
+            <div className="h-[480px] md:h-[600px] bg-gradient-to-b from-[#A91D3A]/10 to-[#0F0F0F] rounded-[2rem] border border-white/10 relative overflow-hidden select-none">
+              {connectError ? (
+                <div className="flex items-center justify-center h-full text-red-400 text-sm font-mono p-6 text-center">
+                  {connectError}
                 </div>
-                <span>{roomRef.current?.state || "disconnected"}</span>
-              </div>
-
+              ) : livekitUrl && livekitToken ? (
+                <LiveKitRoom
+                  video={isArtisan}
+                  audio={isArtisan}
+                  token={livekitToken}
+                  serverUrl={livekitUrl}
+                  data-lk-theme="default"
+                  style={{ height: '100%', width: '100%' }}
+                  connect={true}
+                >
+                  <VideoConference />
+                  <RoomAudioRenderer />
+                </LiveKitRoom>
+              ) : (
+                <div className="flex items-center justify-center h-full text-white/50 text-sm font-mono">
+                  Connecting to LiveKit...
+                </div>
+              )}
             </div>
 
             {/* Narrative Context below stream */}

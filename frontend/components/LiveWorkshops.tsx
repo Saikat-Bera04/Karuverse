@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 
@@ -32,13 +32,30 @@ interface LiveWorkshopsProps {
 function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps) {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  
+  // Create Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newStartTime, setNewStartTime] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    const savedUser = localStorage.getItem("karuverse_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    fetchWorkshops();
+  }, []);
+
+  const fetchWorkshops = () => {
+    setIsLoading(true);
     apiFetch<{ success: boolean; workshops: Workshop[] }>("/api/workshops/live")
       .then((data) => setWorkshops(data.workshops || []))
       .catch((error) => console.error("Failed to load workshops", error))
       .finally(() => setIsLoading(false));
-  }, []);
+  };
 
   const handleJoin = (work: Workshop) => {
     if (!work._id && !work.id) {
@@ -52,6 +69,32 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleCreateSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setIsCreating(true);
+    try {
+      await apiFetch("/api/workshops", {
+        method: "POST",
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDesc,
+          startTime: newStartTime ? new Date(newStartTime).toISOString() : new Date().toISOString(),
+          status: newStartTime ? "SCHEDULED" : "ACTIVE"
+        })
+      });
+      setIsCreateModalOpen(false);
+      setNewTitle("");
+      setNewDesc("");
+      setNewStartTime("");
+      fetchWorkshops();
+    } catch (err: any) {
+      alert("Failed to create workshop: " + err.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <section className="relative w-screen min-h-screen overflow-hidden bg-[#0F0F0F] py-24 px-6 md:px-16 lg:px-20 select-none">
       
@@ -62,7 +105,16 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
       <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col items-center">
         
         {/* Section Header */}
-        <div className="text-center mb-16 max-w-2xl">
+        <div className="text-center mb-10 max-w-2xl relative w-full">
+            <div className="absolute left-0 top-0">
+              <button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-[#C76B29] hover:bg-[#C76B29]/80 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Live Workshop
+              </button>
+            </div>
           <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 0.8 }}
@@ -199,6 +251,60 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
         </div>
 
       </div>
+
+      {/* Create Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/10 p-6 rounded-3xl w-full max-w-md shadow-2xl relative">
+            <button 
+              onClick={() => setIsCreateModalOpen(false)}
+              className="absolute top-4 right-4 text-white/50 hover:text-white"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 className="text-2xl font-heading italic text-white mb-4">Go Live</h3>
+            <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Workshop Title</label>
+                <input 
+                  type="text" 
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                  placeholder="e.g. Masterclass in Bamboo Weaving"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Description</label>
+                <textarea 
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 h-24 resize-none focus:border-[#C76B29] focus:outline-none"
+                  placeholder="Tell your audience what you'll be teaching..."
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Start Date & Time (Optional)</label>
+                <input 
+                  type="datetime-local" 
+                  value={newStartTime}
+                  onChange={(e) => setNewStartTime(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={isCreating}
+                className="w-full bg-[#C76B29] hover:bg-[#C76B29]/80 text-white font-semibold py-3 rounded-xl transition-colors mt-2"
+              >
+                {isCreating ? "Starting Broadcast..." : "Create & Go Live"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </section>
   );

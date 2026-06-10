@@ -22,13 +22,18 @@ export const uploadFileToPinata = async (fileBuffer: Buffer, originalName: strin
   }
 
   const formData = new FormData();
-  formData.append("file", fileBuffer, originalName);
+  formData.append("file", fileBuffer, {
+    filename: originalName,
+    contentType: "application/octet-stream"
+  });
 
   const response = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
     headers: {
       Authorization: `Bearer ${process.env.PINATA_JWT}`,
       ...formData.getHeaders()
-    }
+    },
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity
   });
 
   // Returning both the raw CID and a gateway URL

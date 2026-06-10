@@ -149,10 +149,6 @@ export default function Home() {
             />
             <AIFeatures />
             <NFTAuthenticity />
-            <LiveWorkshops 
-              setCurrentPage={setCurrentPage} 
-              setActiveWorkshop={setActiveWorkshop}
-            />
             <About />
           </>
         )}

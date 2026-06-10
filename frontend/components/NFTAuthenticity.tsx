@@ -20,22 +20,39 @@ function NFTAuthenticity() {
   const steps = [
     {
       title: "Regional Sourcing Verification",
-      icon: "📍",
+      icon: (
+        <svg className="w-5 h-5 text-[#C76B29]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
       description: "Artisans record the raw material source (e.g. Bankura red clay or local cotton yarn) using their digital identity."
     },
     {
       title: "Smart Contract Minting",
-      icon: "⛓️",
+      icon: (
+        <svg className="w-5 h-5 text-[#A91D3A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      ),
       description: "When the piece is finished, an ERC-721 smart contract mints a Celo certificate with all creative data."
     },
     {
       title: "QR Authenticity Card",
-      icon: "📱",
+      icon: (
+        <svg className="w-5 h-5 text-[#F6C453]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+      ),
       description: "A secure physical wood/metal tag with a laser-etched QR code is shipped, linking directly to the digital ledger."
     },
     {
       title: "Immutable Royalties",
-      icon: "💎",
+      icon: (
+        <svg className="w-5 h-5 text-[#F4EDE4]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
       description: "If secondary market collectors resell the piece, 10% royalties are directly auto-routed to the artisan's wallet."
     }
   ];
@@ -52,11 +69,11 @@ function NFTAuthenticity() {
 
     try {
       const data = await apiFetch<{
-        verified: boolean;
-        owner: string;
-        artisan?: string;
-        mintedAt?: string;
-      }>(`/api/nft/verify/${tokenId.trim()}`);
+          verified: boolean;
+          owner: string;
+          artisan?: string;
+          mintedAt?: string;
+        }>(`/api/nft/verify/${tokenId.trim()}`);
       setVerificationResult({
         tokenId: tokenId.trim(),
         owner: data.owner,
@@ -122,7 +139,9 @@ function NFTAuthenticity() {
                       : "liquid-glass border-white/5 hover:bg-white/2"
                   }`}
                 >
-                  <div className="text-2xl mt-1">{step.icon}</div>
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10 text-white mt-0.5">
+                    {step.icon}
+                  </div>
                   <div>
                     <h4 className={`text-base font-semibold transition-colors ${isActive ? "text-[#F6C453]" : "text-white"}`}>
                       {step.title}

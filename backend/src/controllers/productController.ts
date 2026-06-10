@@ -1,7 +1,8 @@
 import NFTCertificate from "../models/NFTCertificate";
 import Product from "../models/Product";
 import { generateStory, suggestPrice } from "../services/aiService";
-import { uploadFileToPinata, uploadJsonToPinata } from "../services/ipfsService";
+import { uploadJsonToPinata } from "../services/ipfsService";
+import cloudinary from "../config/cloudinary";
 import { mintCertificate } from "../services/nftService";
 import { ApiError } from "../utils/apiError";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -26,15 +27,21 @@ const toStringArray = (value: unknown) => {
   }
 };
 
+const uploadFileToCloudinary = async (file: Express.Multer.File): Promise<string> => {
+  const b64 = file.buffer.toString("base64");
+  const dataURI = `data:${file.mimetype};base64,${b64}`;
+  const result = await cloudinary.uploader.upload(dataURI, {
+    folder: "karuverse/products",
+    resource_type: "image"
+  });
+  return result.secure_url;
+};
+
 export const createProduct = asyncHandler(async (req, res) => {
   if (!req.user) throw new ApiError(401, "Authentication required");
 
   const files = (req.files as Express.Multer.File[] | undefined) || [];
-  const uploadedImages = await Promise.all(
-    files.map((file) => uploadFileToPinata(file.buffer, file.originalname))
-  );
-  const uploadedGatewayUrls = uploadedImages.map((image) => image.gatewayUrl);
-  const uploadedIpfsUris = uploadedImages.map((image) => image.ipfsUri);
+  const uploadedGatewayUrls = await Promise.all(files.map(uploadFileToCloudinary));
 
   const materials = toStringArray(req.body.materials);
   const craftType = req.body.craftType || req.body.category;
@@ -94,7 +101,7 @@ export const createProduct = asyncHandler(async (req, res) => {
     const metadataUrl = await uploadJsonToPinata({
       name: product.title,
       description: product.description,
-      image: uploadedIpfsUris[0] || product.images?.[0],
+      image: product.images?.[0],
       artisan: req.user.name,
       district: product.district || req.user.district,
       craftType: product.craftType || product.category

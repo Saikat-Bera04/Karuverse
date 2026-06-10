@@ -114,7 +114,7 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
         
         {/* Section Header */}
         <div className="text-center mb-10 max-w-2xl relative w-full">
-            <div className="absolute left-0 top-0">
+            <div className="absolute right-0 top-0">
               <button 
                 onClick={() => setIsCreateModalOpen(true)}
                 className="bg-[#C76B29] hover:bg-[#C76B29]/80 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-lg flex items-center gap-2"

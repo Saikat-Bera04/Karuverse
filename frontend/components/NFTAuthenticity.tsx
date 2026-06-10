@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/api";
 
 interface VerificationResult {
   tokenId: string;
-  smartContract: string;
-  creatorAddress: string;
-  blockNumber: string;
-  regionVerified: string;
+  owner: string;
+  artisan?: string;
+  mintedAt?: string;
   status: string;
 }
 
@@ -14,44 +14,78 @@ function NFTAuthenticity() {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [tokenId, setTokenId] = useState<string>("");
+  const [verifyError, setVerifyError] = useState<string>("");
 
   const steps = [
     {
       title: "Regional Sourcing Verification",
-      icon: "📍",
+      icon: (
+        <svg className="w-5 h-5 text-[#C76B29]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
       description: "Artisans record the raw material source (e.g. Bankura red clay or local cotton yarn) using their digital identity."
     },
     {
       title: "Smart Contract Minting",
-      icon: "⛓️",
-      description: "When the piece is finished, a ERC-721 smart contract is generated on the Polygon ledger with all creative data."
+      icon: (
+        <svg className="w-5 h-5 text-[#A91D3A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      ),
+      description: "When the piece is finished, an ERC-721 smart contract mints a Celo certificate with all creative data."
     },
     {
       title: "QR Authenticity Card",
-      icon: "📱",
+      icon: (
+        <svg className="w-5 h-5 text-[#F6C453]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+      ),
       description: "A secure physical wood/metal tag with a laser-etched QR code is shipped, linking directly to the digital ledger."
     },
     {
       title: "Immutable Royalties",
-      icon: "💎",
+      icon: (
+        <svg className="w-5 h-5 text-[#F4EDE4]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
       description: "If secondary market collectors resell the piece, 10% royalties are directly auto-routed to the artisan's wallet."
     }
   ];
 
-  const handleVerifySimulation = () => {
+  const handleVerify = async () => {
+    if (!tokenId.trim()) {
+      setVerifyError("Enter a minted token id first.");
+      return;
+    }
+
     setIsVerifying(true);
     setVerificationResult(null);
-    setTimeout(() => {
+    setVerifyError("");
+
+    try {
+      const data = await apiFetch<{
+          verified: boolean;
+          owner: string;
+          artisan?: string;
+          mintedAt?: string;
+        }>(`/api/nft/verify/${tokenId.trim()}`);
       setVerificationResult({
-        tokenId: "48201",
-        smartContract: "0x8920...2f39",
-        creatorAddress: "0xBirenWeaver...0832",
-        blockNumber: "89,420,119",
-        regionVerified: "Bankura, West Bengal",
-        status: "AUTHENTIC & VERIFIED"
+        tokenId: tokenId.trim(),
+        owner: data.owner,
+        artisan: data.artisan,
+        mintedAt: data.mintedAt,
+        status: data.verified ? "AUTHENTIC & VERIFIED" : "OWNER MISMATCH"
       });
+    } catch (error: any) {
+      setVerifyError(error.message || "Verification failed");
+    } finally {
       setIsVerifying(false);
-    }, 1800);
+    }
   };
 
   return (
@@ -105,7 +139,9 @@ function NFTAuthenticity() {
                       : "liquid-glass border-white/5 hover:bg-white/2"
                   }`}
                 >
-                  <div className="text-2xl mt-1">{step.icon}</div>
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10 text-white mt-0.5">
+                    {step.icon}
+                  </div>
                   <div>
                     <h4 className={`text-base font-semibold transition-colors ${isActive ? "text-[#F6C453]" : "text-white"}`}>
                       {step.title}
@@ -147,14 +183,14 @@ function NFTAuthenticity() {
                 <span className="text-[10px] font-mono tracking-widest text-[#F4EDE4]/60 uppercase">KaruVerse Ledger</span>
               </div>
               <span className="text-[9px] bg-[#A91D3A]/25 text-[#A91D3A] font-mono border border-[#A91D3A]/50 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
-                Polygon ERC-721
+                Celo ERC-721
               </span>
             </div>
 
             {/* Certificate Middle: Graphic Badge */}
             <div className="flex-1 flex flex-col items-center justify-center my-6 relative">
               
-              {/* Spinning Web3 Hologram simulation */}
+              {/* Spinning Web3 Hologram */}
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -162,7 +198,7 @@ function NFTAuthenticity() {
               >
                 <div className="w-32 h-32 rounded-full border border-dashed border-[#A91D3A]/30 flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#C76B29]/10 to-[#A91D3A]/10 flex items-center justify-center border border-white/5">
-                    <span className="text-4xl text-[#F6C453] drop-shadow-2xl">🏺</span>
+                    <span className="text-4xl text-[#F6C453] drop-shadow-2xl">K</span>
                   </div>
                 </div>
                 
@@ -172,9 +208,9 @@ function NFTAuthenticity() {
               </motion.div>
 
               <div className="text-center mt-4">
-                <h4 className="font-heading italic text-2xl text-white">Bankura Terracotta Horse</h4>
+                <h4 className="font-heading italic text-2xl text-white">Celo Craft Certificate</h4>
                 <p className="text-[10px] text-[#F4EDE4]/50 font-body uppercase tracking-wider mt-0.5">
-                  Artisan: Madan Karmakar · Nadia District
+                  Enter a minted KaruVerse token id
                 </p>
               </div>
 
@@ -193,37 +229,31 @@ function NFTAuthenticity() {
                     <span>#{verificationResult.tokenId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/40">CREATOR:</span>
-                    <span className="text-[#F6C453]">{verificationResult.creatorAddress}</span>
+                    <span className="text-white/40">OWNER:</span>
+                    <span className="text-[#F6C453]">{verificationResult.owner.slice(0, 10)}...</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/40">BLOCK NO:</span>
-                    <span>{verificationResult.blockNumber}</span>
+                    <span className="text-white/40">ARTISAN:</span>
+                    <span>{verificationResult.artisan || "Recorded"}</span>
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={handleVerifySimulation}
-                  disabled={isVerifying}
-                  className="w-full bg-[#F4EDE4] text-black py-2.5 text-xs font-semibold rounded-full hover:bg-[#A91D3A] hover:text-white transition-all duration-300 flex items-center justify-center gap-1.5 uppercase tracking-wider"
-                >
-                  {isVerifying ? (
-                    <>
-                      <svg className="animate-spin h-3.5 w-3.5 text-current" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Connecting Nodes...
-                    </>
-                  ) : (
-                    <>
-                      Verify Blockchain Certificate
-                      <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </>
-                  )}
-                </button>
+                <div className="flex flex-col gap-2">
+                  <input
+                    value={tokenId}
+                    onChange={(event) => setTokenId(event.target.value)}
+                    placeholder="Token ID"
+                    className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#C76B29]"
+                  />
+                  {verifyError && <p className="text-[10px] text-[#A91D3A]">{verifyError}</p>}
+                  <button
+                    onClick={handleVerify}
+                    disabled={isVerifying}
+                    className="w-full bg-[#F4EDE4] text-black py-2.5 text-xs font-semibold rounded-full hover:bg-[#A91D3A] hover:text-white transition-all duration-300 flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                  >
+                    {isVerifying ? "Verifying..." : "Verify Blockchain Certificate"}
+                  </button>
+                </div>
               )}
             </div>
 

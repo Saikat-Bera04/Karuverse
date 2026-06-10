@@ -175,8 +175,12 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }: Marketpla
               >
                 
                 {/* Visual Image container */}
-                <div className="h-52 bg-gradient-to-b from-white/2 to-white/5 rounded-[1.5rem] border border-white/5 flex items-center justify-center text-6xl relative overflow-hidden shrink-0 select-none">
-                  {prod.emoji}
+                <div className="h-52 bg-gradient-to-b from-white/2 to-white/5 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden shrink-0 select-none">
+                  {prod.images?.[0] ? (
+                    <img src={prod.images[0]} alt={prod.name} className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-widest text-white/35">No image</span>
+                  )}
                   
                   {/* Web3 verified tag */}
                   {prod.nftVerified && (
@@ -213,7 +217,9 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }: Marketpla
                   <div className="flex justify-between items-center border-t border-white/5 pt-3.5 mt-2">
                     <div className="flex flex-col text-left">
                       <span className="text-[9px] text-[#F4EDE4]/40 uppercase font-body">Price</span>
-                      <span className="text-sm font-semibold text-white font-mono">{prod.price} MATIC</span>
+                      <span className="text-sm font-semibold text-white font-mono">
+                        {prod.currency === "CELO" ? `${prod.price} CELO` : `₹${prod.price}`}
+                      </span>
                     </div>
                     <span className="bg-[#F4EDE4] text-black text-[11px] font-semibold px-4 py-1.5 rounded-full uppercase tracking-wider group-hover:bg-[#C76B29] group-hover:text-white transition-colors duration-300">
                       View Story
@@ -226,7 +232,6 @@ function Marketplace({ products, setSelectedProduct, setCurrentPage }: Marketpla
           </div>
         ) : (
           <div className="text-center py-20 bg-white/2 border border-white/5 rounded-[2rem] p-8">
-            <span className="text-4xl">🏺</span>
             <h3 className="font-heading italic text-2xl text-white mt-4">No Crafts Match Filters</h3>
             <p className="text-xs text-[#F4EDE4]/50 font-body mt-2">
               Try adjusting your query or selecting "All Crafts" to view full catalog.

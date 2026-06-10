@@ -46,14 +46,19 @@ export const mintNft = asyncHandler(async (req, res) => {
   });
 
   product.nftTokenId = mint.tokenId;
+  product.nftTransactionHash = mint.transactionHash;
+  product.nftMetadataUrl = metadataUrl;
   product.isVerified = true;
   await product.save();
 
-  res.status(201).json({ success: true, certificate });
+  res.status(201).json({ success: true, certificate, tokenId: mint.tokenId, txHash: mint.transactionHash });
 });
 
 export const verifyNft = asyncHandler(async (req, res) => {
-  const certificate = await NFTCertificate.findOne({ tokenId: req.params.tokenId }).populate("product");
+  const certificate = await NFTCertificate.findOne({ tokenId: req.params.tokenId }).populate({
+    path: "product",
+    populate: { path: "artisan", select: "name district village walletAddress" }
+  });
   if (!certificate) throw new ApiError(404, "Certificate not found");
 
   const contract = getNftContract();
@@ -63,6 +68,8 @@ export const verifyNft = asyncHandler(async (req, res) => {
     success: true,
     verified: owner.toLowerCase() === certificate.ownerWallet.toLowerCase(),
     owner,
+    artisan: (certificate.product as unknown as { artisan?: { name?: string } })?.artisan?.name,
+    mintedAt: certificate.mintedAt,
     certificate
   });
 });

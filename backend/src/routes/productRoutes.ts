@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import {
   createProduct,
   deleteProduct,
@@ -9,8 +10,19 @@ import {
 import { authorize, protect } from "../middleware/auth";
 
 const router = Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 6 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only images are allowed"));
+  }
+});
 
-router.route("/").get(getProducts).post(protect, authorize("artisan", "admin"), createProduct);
+router
+  .route("/")
+  .get(getProducts)
+  .post(protect, authorize("artisan", "admin"), upload.array("images", 6), createProduct);
 router
   .route("/:id")
   .get(getProduct)

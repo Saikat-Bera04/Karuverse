@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/api";
 
 interface SignInProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -11,7 +12,6 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showMockOption, setShowMockOption] = useState<boolean>(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,30 +22,19 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
 
     setIsLoading(true);
     setError(null);
-    setShowMockOption(false);
 
     try {
-      const response = await fetch("http://localhost:5001/api/auth/login", {
+      const data = await apiFetch<{ success: boolean; token: string; user: any }>("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Invalid credentials");
-      }
 
       onLoginSuccess(data.token, data.user);
       setCurrentPage("landing");
     } catch (err: any) {
       console.error("Login connection failed: ", err);
       if (err.message.includes("Failed to fetch") || err.message.includes("fetch")) {
-        setError("Local MongoDB backend (port 5001) is offline.");
-        setShowMockOption(true);
+        setError("Backend API is offline or unreachable.");
       } else {
         setError(err.message || "Incorrect email or password.");
       }
@@ -54,19 +43,7 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
     }
   };
 
-  const handleMockLogin = (role: "artisan" | "buyer") => {
-    const mockUser = {
-      id: role === "artisan" ? "mock-artisan-id" : "mock-buyer-id",
-      name: role === "artisan" ? "Biren Basak" : "Saikat Bera",
-      email: `${role}@karuverse.com`,
-      role: role,
-      bio: role === "artisan" ? "Master handloom weaver from Nadia district." : "Heritage craft admirer",
-      village: role === "artisan" ? "Phulia" : undefined,
-      district: role === "artisan" ? "Nadia" : undefined,
-    };
-    onLoginSuccess("mock-jwt-token-xyz", mockUser);
-    setCurrentPage(role === "artisan" ? "dashboard" : "landing");
-  };
+
 
   return (
     <section className="relative w-screen min-h-screen overflow-hidden bg-black py-24 px-6 md:px-16 lg:px-20 flex items-center justify-center select-none">
@@ -84,7 +61,7 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
           {/* Logo container */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-full liquid-glass flex items-center justify-center mb-3">
-              <img src="/logo.png" alt="KaruVerse Logo" className="w-10 h-10 object-contain rounded-full" />
+              <img src="/karuverse-logo.png" alt="KaruVerse Logo" className="w-10 h-10 object-contain rounded-full" />
             </div>
             <h3 className="font-heading italic text-4xl text-white tracking-wide">
               Sign In
@@ -149,27 +126,7 @@ function SignIn({ onLoginSuccess, setCurrentPage }: SignInProps) {
             </button>
           </form>
 
-          {showMockOption && (
-            <div className="mt-6 pt-5 border-t border-white/5 text-center">
-              <p className="text-[10px] text-[#F4EDE4]/50 mb-3 uppercase tracking-wider">
-                Bypass connection with simulated roles:
-              </p>
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => handleMockLogin("artisan")}
-                  className="px-4 py-2 rounded-full border border-white/10 hover:border-[#C76B29] hover:bg-[#C76B29]/15 text-[10px] font-semibold text-[#C76B29] uppercase tracking-wider transition-all duration-300"
-                >
-                  🧵 Artisan Mode
-                </button>
-                <button
-                  onClick={() => handleMockLogin("buyer")}
-                  className="px-4 py-2 rounded-full border border-white/10 hover:border-[#A91D3A] hover:bg-[#A91D3A]/15 text-[10px] font-semibold text-[#A91D3A] uppercase tracking-wider transition-all duration-300"
-                >
-                  🏺 Buyer Mode
-                </button>
-              </div>
-            </div>
-          )}
+
 
           <div className="mt-8 pt-5 border-t border-white/5 text-center">
             <p className="text-xs text-[#F4EDE4]/60 font-body">

@@ -9,11 +9,8 @@ import {
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
+  celo,
+  celoSepolia,
 } from 'wagmi/chains';
 import {
   QueryClientProvider,
@@ -22,8 +19,8 @@ import {
 
 const config = getDefaultConfig({
   appName: 'Karuverse',
-  projectId: 'YOUR_PROJECT_ID', // Replaced with a dummy project ID by default, the user should provide their own or we can just leave it as is for the template
-  chains: [mainnet, polygon, optimism, arbitrum, base],
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'karuverse-local',
+  chains: [celoSepolia, celo],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 

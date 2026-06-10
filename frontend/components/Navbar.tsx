@@ -1,5 +1,110 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+
+const CustomConnectButton = () => {
+  return (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        const ready = mounted && authenticationStatus !== 'loading';
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus ||
+            authenticationStatus === 'authenticated');
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              'style': {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full font-body bg-white/10 hover:bg-white/20 text-white border border-white/5"
+                  >
+                    Connect Wallet
+                  </button>
+                );
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <button
+                    onClick={openChainModal}
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full font-body bg-red-500/80 hover:bg-red-500 text-white"
+                  >
+                    Wrong network
+                  </button>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={openChainModal}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                    type="button"
+                    className="px-2 py-2 text-sm font-medium transition-all duration-300 rounded-full font-body bg-white/5 hover:bg-white/10 text-white border border-white/5 flex items-center justify-center"
+                  >
+                    {chain.hasIcon && (
+                      <div
+                        style={{
+                          background: chain.iconBackground,
+                          width: 18,
+                          height: 18,
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {chain.iconUrl && (
+                          <img
+                            alt={chain.name ?? 'Chain icon'}
+                            src={chain.iconUrl}
+                            style={{ width: 18, height: 18 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={openAccountModal}
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium transition-all duration-300 rounded-full font-body bg-white/5 hover:bg-white/10 text-white border border-white/5 flex items-center"
+                  >
+                    {account.displayName}
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
+  );
+};
+
+import { apiFetch } from "@/lib/api";
 interface NavbarProps {
   currentPage: string;
   setCurrentPage: (page: string) => void;
@@ -10,6 +115,27 @@ interface NavbarProps {
 function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const { address, isConnected } = useAccount();
+
+  useEffect(() => {
+    if (!isConnected || !address) return;
+
+    apiFetch<{ success: boolean; token: string; user: any }>("/api/auth/wallet-connect", {
+      method: "POST",
+      body: JSON.stringify({
+        walletAddress: address,
+        name: user?.name,
+        role: user?.role || "buyer"
+      })
+    })
+      .then((data) => {
+        if (data.success) {
+          localStorage.setItem("karuverse_jwt", data.token);
+          localStorage.setItem("karuverse_user", JSON.stringify(data.user));
+        }
+      })
+      .catch((error) => console.error("Wallet sync failed", error));
+  }, [address, isConnected, user?.name, user?.role]);
 
   const navLinks = [
     { id: "landing", label: "Home" },
@@ -29,7 +155,7 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
           className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center cursor-pointer select-none hover:scale-105 transition-transform duration-300 z-50"
         >
           <img 
-            src="/logo.png" 
+            src="/karuverse-logo.png" 
             alt="KaruVerse Logo" 
             className="w-8 h-8 object-contain rounded-full"
           />
@@ -58,7 +184,7 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
           })}
           {/* RainbowKit Connect Button */}
           <div className="ml-2">
-            <ConnectButton />
+            <CustomConnectButton />
           </div>
         </div>
 
@@ -184,7 +310,7 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
           </div>
 
           <div className="w-full flex justify-center mt-2">
-            <ConnectButton />
+            <CustomConnectButton />
           </div>
         </div>
       )}

@@ -1,27 +1,37 @@
 import { useState, FormEvent, useRef } from "react";
+import { useAccount } from "wagmi";
 
+import { apiFetch } from "@/lib/api";
+import { mapProduct } from "@/lib/productMapper";
 import { Product } from "@/types/product";
 
 interface DashboardProps {
   addProduct: (product: Product) => void;
+  setCurrentPage: (page: string) => void;
+  user?: any;
 }
 
 interface MintedResult {
   status: string;
-  tokenId: number;
+  tokenId: string;
   txHash: string;
 }
 
-function Dashboard({ addProduct }: DashboardProps) {
+function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
+  const { address } = useAccount();
   // Form states
   const [name, setName] = useState<string>("");
   const [craftType, setCraftType] = useState<string>("handloom");
   const [region, setRegion] = useState<string>("Nadia");
-  const [artisan, setArtisan] = useState<string>("");
+  const [artisan, setArtisan] = useState<string>(user?.name || "");
   const [rawNotes, setRawNotes] = useState<string>("");
-  const [price, setPrice] = useState<number>(100);
+  const [materials, setMaterials] = useState<string>("");
+  const [hoursWorked, setHoursWorked] = useState<number>(8);
+  const [price, setPrice] = useState<number>(1000);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isSuggestingPrice, setIsSuggestingPrice] = useState<boolean>(false);
+  const [priceReasoning, setPriceReasoning] = useState<string>("");
   
   // Real DB product state
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
@@ -37,10 +47,10 @@ function Dashboard({ addProduct }: DashboardProps) {
 
   // Stats / Metrics
   const metrics = [
-    { label: "My Craft Sales", val: "14,890 MATIC" },
-    { label: "NFT Certificates Minted", val: "34" },
-    { label: "Live Workshops Hosted", val: "12" },
-    { label: "Global Rating", val: "4.95 / 5.0" }
+    { label: "Wallet", val: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not linked" },
+    { label: "Network", val: "Celo" },
+    { label: "Image Storage", val: "IPFS" },
+    { label: "Payment Rails", val: "INR + CELO" }
   ];
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,19 +58,14 @@ function Dashboard({ addProduct }: DashboardProps) {
     if (!file) return;
 
     setIsUploading(true);
-    const token = localStorage.getItem("karuverse_jwt");
     const formData = new FormData();
     formData.append("image", file);
 
     try {
-      const res = await fetch("http://localhost:5001/api/upload", {
+      const data = await apiFetch<{ success: boolean; secure_url: string }>("/api/upload", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
         body: formData
       });
-      const data = await res.json();
       if (data.success) {
         setImageUrl(data.secure_url);
       } else {
@@ -75,7 +80,7 @@ function Dashboard({ addProduct }: DashboardProps) {
   };
 
   // Helper AI generator
-  const triggerAiGenerator = () => {
+  const triggerAiGenerator = async () => {
     if (!name || !artisan) {
       alert("Please fill in Craft Name and Artisan Name first!");
       return;
@@ -83,17 +88,76 @@ function Dashboard({ addProduct }: DashboardProps) {
     
     setIsGeneratingStory(true);
     setAiStory("");
-    setTimeout(() => {
-      const generatedCopy = `Meticulously handcrafted in ${region} district, this exquisite ${name} represents a standard of heritage maintained across four generations of ${artisan}'s family. Using entirely sustainable organic methods, each design carries deep regional symbols representing Bengal's rich folklore and direct connection to rural wisdom.`;
-      setAiStory(generatedCopy);
+
+    const token = localStorage.getItem("karuverse_jwt");
+    if (!token) {
+      alert("You must be logged in to generate an AI story.");
       setIsGeneratingStory(false);
-    }, 1800);
+      return;
+    }
+
+    try {
+      const data = await apiFetch<{ success: boolean; story: string }>("/api/ai/story-generator", {
+        method: "POST",
+        body: JSON.stringify({
+          title: name,
+          artisanName: artisan,
+          craftType,
+          district: region,
+          village: rawNotes
+        })
+      });
+      if (data.success) {
+        setAiStory(data.story);
+      } else {
+        alert("AI Generation failed");
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Error generating AI story");
+    } finally {
+      setIsGeneratingStory(false);
+    }
+  };
+
+  const triggerPriceSuggestion = async () => {
+    if (!materials || !hoursWorked || !craftType) {
+      alert("Please enter materials, hours worked, and craft category first.");
+      return;
+    }
+
+    setIsSuggestingPrice(true);
+    setPriceReasoning("");
+
+    try {
+      const data = await apiFetch<{
+        success: boolean;
+        suggestion: { recommendedPrice?: number; reasoning?: string };
+      }>("/api/ai/price-suggestion", {
+        method: "POST",
+        body: JSON.stringify({
+          materials: materials.split(",").map((item) => item.trim()).filter(Boolean),
+          hoursWorked,
+          category: craftType,
+          baseCurrency: "INR"
+        })
+      });
+
+      if (data.suggestion.recommendedPrice) setPrice(data.suggestion.recommendedPrice);
+      setPriceReasoning(data.suggestion.reasoning || "Fair artisan price suggested.");
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Error generating price suggestion");
+    } finally {
+      setIsSuggestingPrice(false);
+    }
   };
 
   // Create Product in DB first
   const handleCreateProduct = async () => {
-    if (!name || !artisan || !aiStory || !price) {
-      alert("Please generate the AI Story description and set price first!");
+    const productDescription = aiStory || rawNotes;
+    if (!name || !artisan || !productDescription || !price) {
+      alert("Please add product notes or generate the AI Story description, then set price.");
       return;
     }
     const token = localStorage.getItem("karuverse_jwt");
@@ -103,22 +167,21 @@ function Dashboard({ addProduct }: DashboardProps) {
     }
 
     try {
-      const res = await fetch("http://localhost:5001/api/products", {
+      const data = await apiFetch<{ success: boolean; product: any }>("/api/products", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
         body: JSON.stringify({
           title: name,
-          description: aiStory,
+          description: productDescription,
           category: craftType,
+          craftType,
           district: region,
           price,
+          currency: "INR",
+          materials: materials.split(",").map((item) => item.trim()).filter(Boolean),
+          hoursWorked,
           images: imageUrl ? [imageUrl] : []
         })
       });
-      const data = await res.json();
       if (data.success) {
         setCreatedProductId(data.product._id);
         alert("Product registered in DB! You can now Mint the NFT Certificate.");
@@ -140,28 +203,27 @@ function Dashboard({ addProduct }: DashboardProps) {
     
     const token = localStorage.getItem("karuverse_jwt");
     const userStr = localStorage.getItem("karuverse_user");
-    let walletAddress = "0xYourWalletAddress";
+    let walletAddress = address || "";
     if (userStr) {
       const user = JSON.parse(userStr);
-      walletAddress = user.walletAddress || "0x0000000000000000000000000000000000000000";
+      walletAddress = address || user.walletAddress || "";
+    }
+    if (!walletAddress) {
+      alert("Connect a Celo wallet before minting the NFT certificate.");
+      return;
     }
 
     setIsMinting(true);
     setMintedResult(null);
 
     try {
-      const res = await fetch("http://localhost:5001/api/nft/mint", {
+      const data = await apiFetch<{ success: boolean; certificate: any; message?: string }>("/api/nft/mint", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
         body: JSON.stringify({
           productId: createdProductId,
           walletAddress
         })
       });
-      const data = await res.json();
       if (data.success) {
         setMintedResult({
           status: "SECURED ON CELO",
@@ -180,53 +242,66 @@ function Dashboard({ addProduct }: DashboardProps) {
   };
 
   // Handle final submission to Marketplace catalog (frontend state update)
-  const handleRegisterProduct = (e: FormEvent) => {
+  const handleRegisterProduct = async (e: FormEvent) => {
     e.preventDefault();
-    if (!createdProductId || !mintedResult) {
-      alert("Please complete the entire pipeline: Register Product and Mint NFT!");
+    if (!createdProductId) {
+      alert("Please register the product in the database first.");
       return;
     }
 
-    // Assign appropriate emoji based on category
-    let emoji = "🏺";
-    if (craftType === "handloom") emoji = "🧵";
-    else if (craftType === "dokra") emoji = "🏺";
-    else if (craftType === "alpana") emoji = "🎨";
-    else if (craftType === "instruments") emoji = "🎸";
+    try {
+      const latest = await apiFetch<{ success: boolean; product: any }>(`/api/products/${createdProductId}`);
 
-    const newCraftProduct: Product = {
-      _id: createdProductId,
-      id: createdProductId,
-      title: name,
-      name: name,
-      category: craftType,
-      craftType: craftType,
-      district: region,
-      region: region,
-      artisan: artisan,
-      price: price,
-      description: aiStory,
-      desc: aiStory,
-      emoji: emoji,
-      isVerified: true,
-      nftVerified: true,
-      nftTokenId: mintedResult.tokenId.toString(),
-      images: imageUrl ? [imageUrl] : []
-    };
+      if (latest.success && latest.product) {
+        addProduct(mapProduct(latest.product));
+      } else {
+        throw new Error("Could not fetch the published product.");
+      }
+    } catch (error) {
+      console.error(error);
 
-    addProduct(newCraftProduct);
+      const newCraftProduct: Product = {
+        _id: createdProductId,
+        id: createdProductId,
+        title: name,
+        name: name,
+        category: craftType,
+        craftType: craftType,
+        district: region,
+        region: region,
+        artisan: artisan,
+        price: price,
+        description: aiStory || rawNotes,
+        desc: aiStory || rawNotes,
+        isVerified: Boolean(mintedResult),
+        nftVerified: Boolean(mintedResult),
+        nftTokenId: mintedResult?.tokenId,
+        nftTransactionHash: mintedResult?.txHash,
+        images: imageUrl ? [imageUrl] : []
+      };
+
+      addProduct(mapProduct(newCraftProduct));
+    }
+
+    setCurrentPage("marketplace");
     
     // Clear forms
     setName("");
     setArtisan("");
     setRawNotes("");
+    setMaterials("");
     setAiStory("");
-    setPrice(100);
+    setHoursWorked(8);
+    setPrice(1000);
     setImageUrl("");
     setCreatedProductId(null);
     setMintedResult(null);
     
-    alert("Success! Craft secured and published to direct global marketplace catalog.");
+    alert(
+      mintedResult
+        ? "Success! Craft secured and published to direct global marketplace catalog."
+        : "Success! Craft published to the marketplace. You can mint the NFT certificate later."
+    );
   };
 
   return (
@@ -308,7 +383,7 @@ function Dashboard({ addProduct }: DashboardProps) {
 
               <div className="flex flex-col text-left">
                 <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
-                  Bengal Origin Origin
+                  Bengal Origin District
                 </label>
                 <select
                   value={region}
@@ -325,7 +400,7 @@ function Dashboard({ addProduct }: DashboardProps) {
 
               <div className="flex flex-col text-left">
                 <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
-                  Price (MATIC)
+                  Price (INR)
                 </label>
                 <input 
                   type="number" 
@@ -338,7 +413,7 @@ function Dashboard({ addProduct }: DashboardProps) {
 
               <div className="flex flex-col text-left">
                 <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
-                  Real Image (Cloudinary)
+                  Product Image (IPFS)
                 </label>
                 <div className="flex items-center gap-2">
                   <input 
@@ -361,6 +436,32 @@ function Dashboard({ addProduct }: DashboardProps) {
                 </div>
               </div>
 
+              <div className="flex flex-col text-left">
+                <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
+                  Materials
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. red clay, natural pigment"
+                  value={materials}
+                  onChange={(e) => setMaterials(e.target.value)}
+                  className="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#C76B29]"
+                />
+              </div>
+
+              <div className="flex flex-col text-left">
+                <label className="text-[11px] font-semibold text-[#F4EDE4]/60 font-body uppercase tracking-wider mb-2">
+                  Hours Worked
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={hoursWorked}
+                  onChange={(e) => setHoursWorked(Number(e.target.value))}
+                  className="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#C76B29]"
+                />
+              </div>
+
             </div>
 
             {/* Notes input */}
@@ -381,6 +482,22 @@ function Dashboard({ addProduct }: DashboardProps) {
             <div className="flex flex-col gap-4 border-t border-white/5 pt-5 mb-6">
               
               {/* Trigger 1: AI storytelling */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <button
+                  type="button"
+                  onClick={triggerPriceSuggestion}
+                  disabled={isSuggestingPrice}
+                  className="w-full sm:w-auto bg-white/10 border border-white/10 text-white px-5 py-2.5 text-xs font-semibold rounded-full hover:bg-white/15 transition-colors shrink-0 flex items-center justify-center gap-2 uppercase tracking-wider"
+                >
+                  {isSuggestingPrice ? "Calculating..." : "Suggest Fair INR Price"}
+                </button>
+                {priceReasoning && (
+                  <p className="text-[10px] text-[#F6C453] font-mono italic leading-snug text-left">
+                    {priceReasoning}
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4 items-center">
                 <button
                   type="button"
@@ -444,9 +561,9 @@ function Dashboard({ addProduct }: DashboardProps) {
             {/* Final publication submit */}
             <button
               type="submit"
-              disabled={!mintedResult}
+              disabled={!createdProductId}
               className={`w-full py-4 text-xs font-semibold rounded-full uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${
-                mintedResult 
+                createdProductId
                   ? "bg-[#F4EDE4] text-black hover:bg-[#C76B29] hover:text-white" 
                   : "bg-white/5 border border-white/10 text-white/40 cursor-not-allowed"
               }`}
@@ -494,14 +611,14 @@ function Dashboard({ addProduct }: DashboardProps) {
                 <div className="flex items-start gap-2 border-b border-white/5 pb-2">
                   <span className="text-green-400 shrink-0">[BLOCK 89M]</span>
                   <div className="text-left flex-1">
-                    <span className="text-white font-semibold">Mint ERC-721:</span> Published Nadia Jamdani Saree (Token #48201). Gas: 0.04 CELO.
+                    <span className="text-white font-semibold">Ready:</span> Minted certificates from this dashboard will appear here.
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2 border-b border-white/5 pb-2">
-                  <span className="text-[#C76B29] shrink-0">[ROYALTY]</span>
+                  <span className="text-[#C76B29] shrink-0">[PAYMENTS]</span>
                   <div className="text-left flex-1">
-                    <span className="text-white font-semibold">Secondary Sale Route:</span> 12 CELO directed to Swarna Chitrakar's wallet.
+                    <span className="text-white font-semibold">Enabled:</span> Buyers can pay with Razorpay INR or native CELO.
                   </div>
                 </div>
 

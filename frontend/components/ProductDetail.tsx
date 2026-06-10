@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Script from "next/script";
+import { parseEther } from "viem";
+import { useAccount } from "wagmi";
 
+import { apiFetch } from "@/lib/api";
 import { Product } from "@/types/product";
 
 interface ProductDetailProps {
@@ -18,10 +21,20 @@ declare global {
 function ProductDetail({ product, onClose }: ProductDetailProps) {
   const [purchaseStep, setPurchaseStep] = useState<number>(0); // 0: Idle, 1: Loading, 2: Transacting, 3: Completed
   const [txHash, setTxHash] = useState<string>("");
+  const [paymentRail, setPaymentRail] = useState<"razorpay" | "celo">("razorpay");
+  const { address } = useAccount();
 
   if (!product) return null;
 
-  const handlePurchase = async () => {
+  const celoInrRate = Number(process.env.NEXT_PUBLIC_CELO_PRICE_INR || 75);
+  const celoAmount = product.celoPrice || Number((product.price / celoInrRate).toFixed(4));
+  const receiverWallet =
+    product.artisanWallet || process.env.NEXT_PUBLIC_CELO_TREASURY_WALLET || "";
+  const explorerBase =
+    process.env.NEXT_PUBLIC_CELO_EXPLORER_URL || "https://celo-sepolia.celoscan.io";
+
+  const handleRazorpayPurchase = async () => {
+    setPaymentRail("razorpay");
     setPurchaseStep(1); // Connecting/Loading
     
     const token = localStorage.getItem("karuverse_jwt");
@@ -33,15 +46,10 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
 
     try {
       // 1. Create order on backend
-      const res = await fetch("http://localhost:5001/api/payments/create-order", {
+      const data = await apiFetch<{ success: boolean; order: any; keyId?: string }>("/api/payments/create-order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ amount: product.price })
+        body: JSON.stringify({ amount: product.price, productId: product.id })
       });
-      const data = await res.json();
       
       if (!data.success) {
         alert("Failed to create order");
@@ -53,7 +61,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
 
       // 2. Open Razorpay modal
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_replace_me", // Ideally from env
+        key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: "KaruVerse Marketplace",
@@ -63,15 +71,10 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
           setPurchaseStep(2); // Transacting / Verifying
           
           // 3. Verify payment on backend
-          const verifyRes = await fetch("http://localhost:5001/api/payments/verify", {
+          const verifyData = await apiFetch<{ success: boolean; verified: boolean }>("/api/payments/verify", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
             body: JSON.stringify(response)
           });
-          const verifyData = await verifyRes.json();
           
           if (verifyData.success && verifyData.verified) {
             setTxHash(response.razorpay_payment_id);
@@ -103,6 +106,121 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
       alert("Error initiating purchase");
       setPurchaseStep(0);
     }
+  };
+
+  const switchToCelo = async () => {
+    const ethereum = (window as any).ethereum;
+    if (!ethereum) throw new Error("No wallet provider found");
+
+    const chainId = process.env.NEXT_PUBLIC_CELO_CHAIN_ID_HEX || "0xaa044c";
+    try {
+      await ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId }]
+      });
+    } catch (error: any) {
+      if (error.code !== 4902) throw error;
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId,
+            chainName: "Celo Sepolia",
+            nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
+            rpcUrls: [process.env.NEXT_PUBLIC_CELO_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org"],
+            blockExplorerUrls: [explorerBase]
+          }
+        ]
+      });
+    }
+  };
+
+  const handleCeloPurchase = async () => {
+    setPaymentRail("celo");
+    setPurchaseStep(1);
+
+    if (!address) {
+      alert("Connect your Celo wallet first.");
+      setPurchaseStep(0);
+      return;
+    }
+    if (!receiverWallet) {
+      alert("No artisan or treasury wallet configured for CELO payments.");
+      setPurchaseStep(0);
+      return;
+    }
+
+    try {
+      await switchToCelo();
+      setPurchaseStep(2);
+
+      const ethereum = (window as any).ethereum;
+      const hash = await ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: address,
+            to: receiverWallet,
+            value: `0x${parseEther(String(celoAmount)).toString(16)}`
+          }
+        ]
+      });
+
+      const result = await apiFetch<{ success: boolean; verified: boolean }>("/api/payments/celo/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          productId: product.id,
+          txHash: hash,
+          amountCelo: celoAmount,
+          payerWallet: address,
+          receiverWallet
+        })
+      });
+
+      if (result.success && result.verified) {
+        setTxHash(hash);
+        setPurchaseStep(3);
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "CELO payment failed");
+      setPurchaseStep(0);
+    }
+  };
+
+  const downloadNftCard = () => {
+    const escape = (value?: string) =>
+      String(value || "").replace(/[&<>"']/g, (char) => {
+        const map: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
+        return map[char];
+      });
+
+    const verifyUrl = `${window.location.origin}/?verify=${product.nftTokenId || product.id}`;
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+        <rect width="1200" height="720" fill="#0f0f0f"/>
+        <rect x="40" y="40" width="1120" height="640" rx="28" fill="#17120f" stroke="#c76b29" stroke-width="3"/>
+        <text x="84" y="112" fill="#f6c453" font-family="Arial" font-size="28" font-weight="700">KaruVerse Celo NFT Certificate</text>
+        <text x="84" y="190" fill="#ffffff" font-family="Georgia" font-size="58" font-style="italic">${escape(product.name)}</text>
+        <text x="84" y="252" fill="#f4ede4" font-family="Arial" font-size="26">Artisan: ${escape(product.artisan)}</text>
+        <text x="84" y="296" fill="#f4ede4" font-family="Arial" font-size="24">Craft: ${escape(product.craftType)} | Region: ${escape(product.region)}</text>
+        <text x="84" y="380" fill="#9ee6a7" font-family="Arial" font-size="28" font-weight="700">Verified on Celo</text>
+        <text x="84" y="430" fill="#f4ede4" font-family="Arial" font-size="24">Token ID: ${escape(product.nftTokenId || product.id)}</text>
+        <text x="84" y="474" fill="#f4ede4" font-family="Arial" font-size="20">Metadata: ${escape(product.nftMetadataUrl || "Minted from KaruVerse")}</text>
+        <text x="84" y="548" fill="#f4ede4" font-family="Arial" font-size="18">Verify: ${escape(verifyUrl)}</text>
+        <rect x="872" y="146" width="220" height="220" rx="18" fill="#f4ede4"/>
+        <text x="930" y="275" fill="#0f0f0f" font-family="Arial" font-size="24" font-weight="700">KARU</text>
+        <text x="872" y="430" fill="#f6c453" font-family="Arial" font-size="20">Authentic Bengali Craft</text>
+      </svg>
+    `;
+
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `karuverse-nft-card-${product.nftTokenId || product.id}.svg`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -151,7 +269,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
               {product.images && product.images.length > 0 ? (
                 <img src={product.images[0]} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
               ) : (
-                product.emoji
+                <span className="text-white/35 text-sm uppercase tracking-widest">No image uploaded</span>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f]/80 to-transparent opacity-90 group-hover:opacity-70 transition-opacity"></div>
               
@@ -217,12 +335,19 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-[#F4EDE4]/40 text-[9px] uppercase">Unique Token ID</span>
-                    <span className="text-white mt-0.5">#{product.id}</span>
+                    <span className="text-white mt-0.5">#{product.nftTokenId || product.id}</span>
                   </div>
                   <div className="flex flex-col text-left md:col-span-2">
                     <span className="text-[#F4EDE4]/40 text-[9px] uppercase">Secondary Creator Royalty</span>
                     <span className="text-[#F6C453] mt-0.5 font-bold">10% Direct Royalty Routing</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={downloadNftCard}
+                    className="mt-2 w-full bg-white/5 border border-white/10 text-white py-2.5 rounded-full hover:bg-[#C76B29] transition-colors uppercase tracking-wider text-[10px]"
+                  >
+                    Download NFT Card
+                  </button>
                 </div>
               </div>
             )}
@@ -235,14 +360,23 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
             {/* Purchase Progress */}
             {purchaseStep === 0 && (
               <button
-                onClick={handlePurchase}
+                onClick={handleRazorpayPurchase}
                 className="w-full bg-[#F4EDE4] text-black py-4 text-sm font-semibold rounded-full hover:bg-[#C76B29] hover:text-white transition-all duration-500 uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                Secure Purchase via Razorpay
+                Pay ₹{product.price} with Razorpay
                 <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                   <line x1="7" y1="17" x2="17" y2="7"></line>
                   <polyline points="7 7 17 7 17 17"></polyline>
                 </svg>
+              </button>
+            )}
+
+            {purchaseStep === 0 && (
+              <button
+                onClick={handleCeloPurchase}
+                className="w-full bg-[#C76B29]/15 border border-[#C76B29]/30 text-[#F6C453] py-4 text-sm font-semibold rounded-full hover:bg-[#C76B29] hover:text-white transition-all duration-500 uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                Pay {celoAmount} CELO
               </button>
             )}
 
@@ -272,14 +406,14 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
                   🎉 PAYMENT VERIFIED!
                 </div>
                 <div className="text-[10px] text-green-300/80 font-normal normal-case">
-                  Receipt ID: <span className="underline">{txHash}</span>
+                  {paymentRail === "celo" ? "Tx" : "Receipt"} ID: <span className="underline">{txHash}</span>
                 </div>
               </div>
             )}
 
             <div className="flex justify-between items-center text-[10px] text-[#F4EDE4]/40 font-mono">
               <span>Direct P2P Routing: 95% Artisan / 5% Platform</span>
-              <span>100% Secure via Razorpay</span>
+              <span>Razorpay INR or Celo coin</span>
             </div>
 
           </div>

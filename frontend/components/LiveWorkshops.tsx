@@ -1,17 +1,28 @@
+import { useEffect, useState, FormEvent } from "react";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/api";
 
 interface Workshop {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
-  artisan: string;
-  village: string;
-  type: string;
-  status: string;
-  badgeColor: string;
-  image: string;
-  desc: string;
-  time: string;
-  participants: string;
+  artisan?: any;
+  village?: string;
+  type?: string;
+  craftType?: string;
+  status?: string;
+  badgeColor?: string;
+  image?: string;
+  thumbnail?: string;
+  desc?: string;
+  description?: string;
+  time?: string;
+  participants?: string;
+  startTime?: string;
+  endTime?: string;
+  ticketPrice?: number;
+  attendees?: any[];
+  livekitRoomName?: string;
 }
 
 interface LiveWorkshopsProps {
@@ -20,67 +31,76 @@ interface LiveWorkshopsProps {
 }
 
 function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps) {
-  const workshops: Workshop[] = [
-    {
-      id: "pottery",
-      title: "Bankura Terracotta Modeling",
-      artisan: "Madan Karmakar",
-      village: "Panchmura Village, Bankura",
-      type: "Terracotta Pottery",
-      status: "ACTIVE",
-      badgeColor: "bg-red-500",
-      image: "🏺",
-      desc: "Learn the ancient techniques of throwing red clay and shaping the legendary Bankura long-necked terracotta horses directly on the wheel.",
-      time: "Started 10 mins ago",
-      participants: "42 Watching"
-    },
-    {
-      id: "weaving",
-      title: "Traditional Jamdani Weaving",
-      artisan: "Biren Basak",
-      village: "Phulia, Nadia District",
-      type: "Handloom Weaving",
-      status: "ACTIVE",
-      badgeColor: "bg-red-500",
-      image: "🧵",
-      desc: "Observe the complex supplementary weft hand-weaving process. Ask questions about counting threads and matching structural patterns.",
-      time: "Started 25 mins ago",
-      participants: "89 Watching"
-    },
-    {
-      id: "baul",
-      title: "Folk Baul Soul & Ektara",
-      artisan: "Sanatan Das Baul",
-      village: "Jaydev Kenduli, Birbhum",
-      type: "Baul Folk Music",
-      status: "UPCOMING",
-      badgeColor: "bg-[#F6C453] text-black",
-      image: "🎸",
-      desc: "A meditative folk singing workshop exploring traditional Bengali spiritual poetry, ektara rhythms, and rural life narratives.",
-      time: "Today at 6:30 PM",
-      participants: "180 Registered"
-    },
-    {
-      id: "patachitra",
-      title: "Patachitra Painting & Scroll Songs",
-      artisan: "Swarna Chitrakar",
-      village: "Naya Village, Pingla",
-      type: "Scroll Painting",
-      status: "UPCOMING",
-      badgeColor: "bg-[#F6C453] text-black",
-      image: "🎨",
-      desc: "Understand natural pigment processing from leaves, stones, and seeds, and paint a traditional scroll depicting Bengal folk stories.",
-      time: "Tomorrow at 4:00 PM",
-      participants: "94 Registered"
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  
+  // Create Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newStartTime, setNewStartTime] = useState("");
+  const [newEndTime, setNewEndTime] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("karuverse_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
-  ];
+    fetchWorkshops();
+  }, []);
+
+  const fetchWorkshops = () => {
+    setIsLoading(true);
+    apiFetch<{ success: boolean; workshops: Workshop[] }>("/api/workshops/live")
+      .then((data) => setWorkshops(data.workshops || []))
+      .catch((error) => console.error("Failed to load workshops", error))
+      .finally(() => setIsLoading(false));
+  };
 
   const handleJoin = (work: Workshop) => {
+    if (!work._id && !work.id) {
+      alert("Workshop must be created in the backend before joining.");
+      return;
+    }
     if (setActiveWorkshop) {
       setActiveWorkshop(work);
     }
     setCurrentPage("workshop_room");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCreateSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setIsCreating(true);
+    try {
+      const data = await apiFetch<{success: boolean, workshop: Workshop}>("/api/workshops", {
+        method: "POST",
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDesc,
+          startTime: newStartTime ? new Date(newStartTime).toISOString() : new Date().toISOString(),
+          endTime: newEndTime ? new Date(newEndTime).toISOString() : undefined,
+          status: newStartTime ? "SCHEDULED" : "ACTIVE"
+        })
+      });
+      setIsCreateModalOpen(false);
+      setNewTitle("");
+      setNewDesc("");
+      setNewStartTime("");
+      setNewEndTime("");
+      fetchWorkshops();
+      
+      if (data && data.workshop) {
+        handleJoin(data.workshop);
+      }
+    } catch (err: any) {
+      alert("Failed to create workshop: " + err.message);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -93,7 +113,16 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
       <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col items-center">
         
         {/* Section Header */}
-        <div className="text-center mb-16 max-w-2xl">
+        <div className="text-center mb-10 max-w-2xl relative w-full">
+            <div className="absolute right-0 top-0">
+              <button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-[#C76B29] hover:bg-[#C76B29]/80 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Live Workshop
+              </button>
+            </div>
           <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 0.8 }}
@@ -121,9 +150,27 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
         </div>
 
         {/* Grid cards */}
+        {isLoading && (
+          <div className="w-full text-center py-16 text-sm text-white/50 font-mono">
+            Loading live workshops...
+          </div>
+        )}
+
+        {!isLoading && workshops.length === 0 && (
+          <div className="w-full text-center py-16 border border-white/5 rounded-[1.5rem] text-sm text-white/55">
+            No live workshops are scheduled in MongoDB yet.
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
           {workshops.map((work, idx) => {
-            const isActive = work.status === "ACTIVE";
+            const startTime = work.startTime ? new Date(work.startTime) : null;
+            const isActive = startTime ? startTime.getTime() <= Date.now() : work.status === "ACTIVE";
+            const artisan = typeof work.artisan === "object" ? work.artisan?.name : work.artisan;
+            const village =
+              typeof work.artisan === "object"
+                ? [work.artisan?.village, work.artisan?.district].filter(Boolean).join(", ")
+                : work.village;
             return (
               <motion.div
                 key={idx}
@@ -142,31 +189,38 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-[10px] text-[#F6C453] font-body font-semibold uppercase tracking-wider">
-                      {work.type}
+                      {work.craftType || work.type || "Workshop"}
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${work.badgeColor}`}>
-                      {work.status}
+                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${
+                      isActive ? "bg-red-500 text-white" : "bg-[#F6C453] text-black"
+                    }`}>
+                      {isActive ? "LIVE" : "UPCOMING"}
                     </span>
                   </div>
                   
                   {/* Title details */}
                   <div className="flex gap-4 items-start">
-                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl shrink-0">
-                      {work.image}
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                      {work.thumbnail ? (
+                        <img src={work.thumbnail} alt={work.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] text-white/35 uppercase">Live</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-heading italic text-2xl md:text-3xl text-white tracking-wide leading-none">
                         {work.title}
                       </h3>
                       <p className="text-[10px] text-[#F4EDE4]/50 font-body mt-1">
-                        By Master: <span className="text-[#F4EDE4] font-medium">{work.artisan}</span> · {work.village}
+                        By Master: <span className="text-[#F4EDE4] font-medium">{artisan || "Artisan"}</span>
+                        {village ? ` · ${village}` : ""}
                       </p>
                     </div>
                   </div>
 
                   {/* Body description */}
                   <p className="text-xs md:text-sm text-[#F4EDE4]/70 font-body font-light leading-relaxed mt-4">
-                    {work.desc}
+                    {work.description || work.desc}
                   </p>
                 </div>
 
@@ -174,10 +228,14 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
                 <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-6">
                   <div className="flex flex-col text-left">
                     <span className="text-[9px] text-[#F4EDE4]/40 uppercase font-body">Timing / Status</span>
-                    <span className="text-xs text-white font-medium">{work.time}</span>
+                    <span className="text-xs text-white font-medium">
+                      {startTime ? startTime.toLocaleString() : work.time || "Scheduled"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] text-[#F4EDE4]/50 font-mono">{work.participants}</span>
+                    <span className="text-[10px] text-[#F4EDE4]/50 font-mono">
+                      {work.attendees?.length || 0} registered
+                    </span>
                     <button
                       onClick={() => handleJoin(work)}
                       className={`px-5 py-2 text-xs font-semibold rounded-full flex items-center gap-1 transition-all duration-300 ${
@@ -201,6 +259,69 @@ function LiveWorkshops({ setCurrentPage, setActiveWorkshop }: LiveWorkshopsProps
         </div>
 
       </div>
+
+      {/* Create Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/10 p-6 rounded-3xl w-full max-w-md shadow-2xl relative">
+            <button 
+              onClick={() => setIsCreateModalOpen(false)}
+              className="absolute top-4 right-4 text-white/50 hover:text-white"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 className="text-2xl font-heading italic text-white mb-4">Go Live</h3>
+            <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Workshop Title</label>
+                <input 
+                  type="text" 
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                  placeholder="e.g. Masterclass in Bamboo Weaving"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Description</label>
+                <textarea 
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 h-24 resize-none focus:border-[#C76B29] focus:outline-none"
+                  placeholder="Tell your audience what you'll be teaching..."
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">Start Date & Time (Optional)</label>
+                <input 
+                  type="datetime-local" 
+                  value={newStartTime}
+                  onChange={(e) => setNewStartTime(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/60 uppercase tracking-wide">End Date & Time (Optional)</label>
+                <input 
+                  type="datetime-local" 
+                  value={newEndTime}
+                  onChange={(e) => setNewEndTime(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white mt-1 focus:border-[#C76B29] focus:outline-none"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={isCreating}
+                className="w-full bg-[#C76B29] hover:bg-[#C76B29]/80 text-white font-semibold py-3 rounded-xl transition-colors mt-2"
+              >
+                {isCreating ? "Starting Broadcast..." : "Create & Go Live"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </section>
   );

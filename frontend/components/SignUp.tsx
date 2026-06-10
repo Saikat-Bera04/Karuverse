@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { apiFetch } from "@/lib/api";
 
 interface SignUpProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -19,8 +20,6 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showMockOption, setShowMockOption] = useState<boolean>(false);
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
@@ -30,7 +29,6 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
 
     setIsLoading(true);
     setError(null);
-    setShowMockOption(false);
 
     const payload = {
       name,
@@ -43,27 +41,17 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
     };
 
     try {
-      const response = await fetch("http://localhost:5001/api/auth/register", {
+      const data = await apiFetch<{ success: boolean; token: string; user: any }>("/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Registration failed");
-      }
 
       onLoginSuccess(data.token, data.user);
       setCurrentPage("landing");
     } catch (err: any) {
       console.error("Registration connection failed: ", err);
       if (err.message.includes("Failed to fetch") || err.message.includes("fetch")) {
-        setError("Local MongoDB backend (port 5001) is offline.");
-        setShowMockOption(true);
+        setError("Backend API is offline or unreachable.");
       } else {
         setError(err.message || "An error occurred during registration.");
       }
@@ -72,19 +60,7 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
     }
   };
 
-  const handleMockSignup = () => {
-    const mockUser = {
-      id: "mock-new-id",
-      name: name || "Creative Soul",
-      email: email || "soul@karuverse.com",
-      role: role,
-      bio: role === "artisan" ? bio || "Handmade traditional craft artisan." : "Supporter of regional craft traditions",
-      village: role === "artisan" ? village || "Bankura Folk Hub" : undefined,
-      district: role === "artisan" ? district : undefined,
-    };
-    onLoginSuccess("mock-jwt-token-xyz", mockUser);
-    setCurrentPage(role === "artisan" ? "dashboard" : "landing");
-  };
+
 
   return (
     <section className="relative w-screen min-h-screen overflow-hidden bg-black py-24 px-6 md:px-16 lg:px-20 flex items-center justify-center select-none">
@@ -102,7 +78,7 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
           {/* Header */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-full liquid-glass flex items-center justify-center mb-3">
-              <img src="/logo.png" alt="KaruVerse Logo" className="w-10 h-10 object-contain rounded-full" />
+              <img src="/karuverse-logo.png" alt="KaruVerse Logo" className="w-10 h-10 object-contain rounded-full" />
             </div>
             <h3 className="font-heading italic text-4xl text-white tracking-wide">
               Sign Up
@@ -273,19 +249,7 @@ function SignUp({ onLoginSuccess, setCurrentPage }: SignUpProps) {
             </button>
           </form>
 
-          {showMockOption && (
-            <div className="mt-6 pt-5 border-t border-white/5 text-center">
-              <p className="text-[10px] text-[#F4EDE4]/50 mb-3 uppercase tracking-wider">
-                Bypass connection with simulated signup:
-              </p>
-              <button
-                onClick={handleMockSignup}
-                className="w-full py-2.5 rounded-full border border-white/10 hover:border-[#C76B29] hover:bg-[#C76B29]/15 text-[10px] font-semibold text-[#C76B29] uppercase tracking-wider transition-all duration-300"
-              >
-                ✓ Complete Offline Signup
-              </button>
-            </div>
-          )}
+
 
           <div className="mt-8 pt-5 border-t border-white/5 text-center">
             <p className="text-xs text-[#F4EDE4]/60 font-body">

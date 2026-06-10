@@ -20,7 +20,7 @@ function About() {
     {
       year: "The Future Today",
       title: "AI + Web3 Symbiosis",
-      desc: "By combining AI translation pipelines and Polygon smart contracts, Bengali artisans verify regional signatures, claim direct payments, and receive secondary market royalties autonomously."
+      desc: "By combining AI translation pipelines and Celo smart contracts, Bengali artisans verify regional signatures, claim direct payments, and receive secondary market royalties autonomously."
     }
   ];
 
@@ -153,19 +153,19 @@ function About() {
         {/* 3. IMPACT METRICS ROW */}
         <div className="w-full border-t border-b border-white/10 py-8 flex flex-wrap items-center justify-around gap-6 mb-20 text-center font-body">
           <div>
-            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">340+</span>
+            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">API</span>
             <p className="text-[10px] text-[#F4EDE4]/40 uppercase tracking-widest mt-1">Artisans Secured</p>
           </div>
           <div>
-            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">14+</span>
+            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">Live</span>
             <p className="text-[10px] text-[#F4EDE4]/40 uppercase tracking-widest mt-1">Connected Villages</p>
           </div>
           <div>
-            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">890.5k MATIC</span>
+            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">INR + CELO</span>
             <p className="text-[10px] text-[#F4EDE4]/40 uppercase tracking-widest mt-1">Volume Exchanged</p>
           </div>
           <div>
-            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">1,840+</span>
+            <span className="text-2xl md:text-3xl font-heading italic text-white leading-none">Celo</span>
             <p className="text-[10px] text-[#F4EDE4]/40 uppercase tracking-widest mt-1">NFT Certificates</p>
           </div>
         </div>

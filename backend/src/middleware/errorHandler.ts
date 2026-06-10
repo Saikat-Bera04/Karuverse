@@ -11,11 +11,16 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  const statusCode = error.statusCode || (error instanceof ApiError ? error.statusCode : 500);
+  const isDuplicateKeyError = error.code === 11000;
+  const statusCode = isDuplicateKeyError
+    ? 409
+    : error.statusCode || (error instanceof ApiError ? error.statusCode : 500);
 
   res.status(statusCode).json({
     success: false,
-    message: error.message || "Internal server error",
+    message: isDuplicateKeyError
+      ? "A record with this unique value already exists"
+      : error.message || "Internal server error",
     stack: process.env.NODE_ENV === "production" ? undefined : error.stack
   });
 };

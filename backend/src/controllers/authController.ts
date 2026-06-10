@@ -105,3 +105,56 @@ export const walletConnect = asyncHandler(async (req, res) => {
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, user: req.user });
 });
+
+export const getProfile = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(401, "Authentication required");
+  }
+
+  const Product = (await import("../models/Product")).default;
+  const products = await Product.find({ artisan: req.user._id }).select(
+    "title description price currency category craftType images isVerified nftTokenId createdAt"
+  );
+
+  const userProfile = {
+    ...req.user.toObject(),
+    products: products || []
+  };
+
+  res.json({ success: true, profile: userProfile });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(401, "Authentication required");
+  }
+
+  const { name, bio, village, district, role, profileImage } = req.body;
+
+  const allowedUpdates: any = { name, bio, village, district, profileImage };
+  
+  // Allow users to upgrade to "artisan" role, but only admin can assign other roles
+  if (role) {
+    if (role === "artisan" || req.user.role === "admin") {
+      allowedUpdates.role = role;
+    } else {
+      throw new ApiError(403, "You can only upgrade to artisan role");
+    }
+  }
+
+  const updateObj = Object.fromEntries(
+    Object.entries(allowedUpdates).filter(([, v]) => v !== undefined)
+  );
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: updateObj },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.json({ success: true, user });
+});

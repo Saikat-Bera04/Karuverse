@@ -196,6 +196,12 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
                 Hi, <span className="font-semibold text-white">{user.name.split(" ")[0]}</span>
               </span>
               <button
+                onClick={() => setCurrentPage("profile")}
+                className="px-4 py-2 text-xs font-semibold rounded-full bg-[#C76B29]/20 hover:bg-[#C76B29]/40 text-white border border-[#C76B29]/30 transition-all duration-300"
+              >
+                Profile
+              </button>
+              <button
                 onClick={() => {
                   onLogout();
                   setCurrentPage("landing");
@@ -274,6 +280,15 @@ function Navbar({ currentPage, setCurrentPage, user, onLogout }: NavbarProps) {
                 <span className="text-xs text-center text-white/70 py-1">
                   Signed in as <span className="font-semibold text-[#F6C453]">{user.name}</span>
                 </span>
+                <button
+                  onClick={() => {
+                    setCurrentPage("profile");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 text-center text-xs font-semibold rounded-full bg-[#C76B29]/20 border border-[#C76B29]/30 text-white"
+                >
+                  My Profile
+                </button>
                 <button
                   onClick={() => {
                     onLogout();

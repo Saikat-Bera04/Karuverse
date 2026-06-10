@@ -40,6 +40,24 @@ export const walletConnect = asyncHandler(async (req, res) => {
   }
 
   const normalizedWallet = walletAddress.toLowerCase();
+  const createWalletUser = async () => {
+    try {
+      return await User.findOneAndUpdate(
+        { walletAddress: normalizedWallet },
+        {
+          $set: { walletAddress: normalizedWallet },
+          $setOnInsert: {
+            name: name || `Creator ${normalizedWallet.slice(0, 6)}`,
+            role: role || "buyer"
+          }
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (error: any) {
+      if (error?.code !== 11000) throw error;
+      return User.findOne({ walletAddress: normalizedWallet });
+    }
+  };
   const header = req.headers.authorization;
   const bearerToken = header?.startsWith("Bearer ") ? header.split(" ")[1] : undefined;
   let authenticatedUserId: string | undefined;
@@ -53,19 +71,31 @@ export const walletConnect = asyncHandler(async (req, res) => {
     }
   }
 
-  const user = authenticatedUserId
-    ? await User.findByIdAndUpdate(authenticatedUserId, { walletAddress: normalizedWallet }, { new: true })
-    : await User.findOneAndUpdate(
-        { walletAddress: normalizedWallet },
-        {
-          $setOnInsert: {
-            name: name || `Creator ${normalizedWallet.slice(0, 6)}`,
-            role: role || "buyer"
-          },
-          walletAddress: normalizedWallet
-        },
-        { new: true, upsert: true }
-      );
+  let user;
+
+  if (authenticatedUserId) {
+    user = await User.findById(authenticatedUserId);
+    if (!user) throw new ApiError(404, "User not found");
+
+    const walletOwner = await User.findOne({ walletAddress: normalizedWallet });
+    const walletBelongsToAnotherUser =
+      walletOwner && String(walletOwner._id) !== String(user._id);
+
+    if (walletBelongsToAnotherUser) {
+      const isWalletOnlyAccount = !walletOwner.email && !walletOwner.password;
+
+      if (!isWalletOnlyAccount) {
+        throw new ApiError(409, "This wallet is already linked to another account");
+      }
+
+      await User.updateOne({ _id: walletOwner._id }, { $unset: { walletAddress: "" } });
+    }
+
+    user.walletAddress = normalizedWallet;
+    await user.save();
+  } else {
+    user = await createWalletUser();
+  }
 
   if (!user) throw new ApiError(404, "User not found");
 

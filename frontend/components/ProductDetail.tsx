@@ -31,7 +31,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
   const receiverWallet =
     product.artisanWallet || process.env.NEXT_PUBLIC_CELO_TREASURY_WALLET || "";
   const explorerBase =
-    process.env.NEXT_PUBLIC_CELO_EXPLORER_URL || "https://alfajores.celoscan.io";
+    process.env.NEXT_PUBLIC_CELO_EXPLORER_URL || "https://celo-sepolia.celoscan.io";
 
   const handleRazorpayPurchase = async () => {
     setPaymentRail("razorpay");
@@ -112,7 +112,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
     const ethereum = (window as any).ethereum;
     if (!ethereum) throw new Error("No wallet provider found");
 
-    const chainId = process.env.NEXT_PUBLIC_CELO_CHAIN_ID_HEX || "0xaef3";
+    const chainId = process.env.NEXT_PUBLIC_CELO_CHAIN_ID_HEX || "0xaa044c";
     try {
       await ethereum.request({
         method: "wallet_switchEthereumChain",
@@ -125,9 +125,9 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
         params: [
           {
             chainId,
-            chainName: "Celo Alfajores",
+            chainName: "Celo Sepolia",
             nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
-            rpcUrls: [process.env.NEXT_PUBLIC_CELO_RPC_URL || "https://alfajores-forno.celo-testnet.org"],
+            rpcUrls: [process.env.NEXT_PUBLIC_CELO_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org"],
             blockExplorerUrls: [explorerBase]
           }
         ]
@@ -325,7 +325,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
                     🧬 DIGITAL PROVENANCE LEDGER
                   </span>
                   <span className="text-[9px] bg-white/5 text-[#F4EDE4]/60 px-2 py-0.5 rounded border border-white/10">
-                    Celo Alfajores
+                    Celo Sepolia
                   </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 leading-snug">

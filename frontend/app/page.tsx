@@ -111,7 +111,10 @@ export default function Home() {
 
   // Save new products helper
   const addProduct = (newProduct: Product) => {
-    setProducts((prev) => [...prev, newProduct]);
+    setProducts((prev) => [
+      newProduct,
+      ...prev.filter((product) => product.id !== newProduct.id && product._id !== newProduct._id)
+    ]);
   };
 
   // Suppression wrapper for harmless framer motion warnings
@@ -175,6 +178,7 @@ export default function Home() {
         {currentPage === "dashboard" && (
           <Dashboard 
             addProduct={addProduct}
+            setCurrentPage={setCurrentPage}
             user={user}
           />
         )}

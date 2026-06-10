@@ -7,6 +7,7 @@ import { Product } from "@/types/product";
 
 interface DashboardProps {
   addProduct: (product: Product) => void;
+  setCurrentPage: (page: string) => void;
   user?: any;
 }
 
@@ -16,7 +17,7 @@ interface MintedResult {
   txHash: string;
 }
 
-function Dashboard({ addProduct, user }: DashboardProps) {
+function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
   const { address } = useAccount();
   // Form states
   const [name, setName] = useState<string>("");
@@ -113,7 +114,7 @@ function Dashboard({ addProduct, user }: DashboardProps) {
       }
     } catch (error) {
       console.error(error);
-      alert("Error generating AI story");
+      alert(error instanceof Error ? error.message : "Error generating AI story");
     } finally {
       setIsGeneratingStory(false);
     }
@@ -146,7 +147,7 @@ function Dashboard({ addProduct, user }: DashboardProps) {
       setPriceReasoning(data.suggestion.reasoning || "Fair artisan price suggested.");
     } catch (error) {
       console.error(error);
-      alert("Error generating price suggestion");
+      alert(error instanceof Error ? error.message : "Error generating price suggestion");
     } finally {
       setIsSuggestingPrice(false);
     }
@@ -154,8 +155,9 @@ function Dashboard({ addProduct, user }: DashboardProps) {
 
   // Create Product in DB first
   const handleCreateProduct = async () => {
-    if (!name || !artisan || !aiStory || !price) {
-      alert("Please generate the AI Story description and set price first!");
+    const productDescription = aiStory || rawNotes;
+    if (!name || !artisan || !productDescription || !price) {
+      alert("Please add product notes or generate the AI Story description, then set price.");
       return;
     }
     const token = localStorage.getItem("karuverse_jwt");
@@ -169,7 +171,7 @@ function Dashboard({ addProduct, user }: DashboardProps) {
         method: "POST",
         body: JSON.stringify({
           title: name,
-          description: aiStory,
+          description: productDescription,
           category: craftType,
           craftType,
           district: region,
@@ -240,34 +242,48 @@ function Dashboard({ addProduct, user }: DashboardProps) {
   };
 
   // Handle final submission to Marketplace catalog (frontend state update)
-  const handleRegisterProduct = (e: FormEvent) => {
+  const handleRegisterProduct = async (e: FormEvent) => {
     e.preventDefault();
-    if (!createdProductId || !mintedResult) {
-      alert("Please complete the entire pipeline: Register Product and Mint NFT!");
+    if (!createdProductId) {
+      alert("Please register the product in the database first.");
       return;
     }
 
-    const newCraftProduct: Product = {
-      _id: createdProductId,
-      id: createdProductId,
-      title: name,
-      name: name,
-      category: craftType,
-      craftType: craftType,
-      district: region,
-      region: region,
-      artisan: artisan,
-      price: price,
-      description: aiStory,
-      desc: aiStory,
-      isVerified: true,
-      nftVerified: true,
-      nftTokenId: mintedResult.tokenId,
-      nftTransactionHash: mintedResult.txHash,
-      images: imageUrl ? [imageUrl] : []
-    };
+    try {
+      const latest = await apiFetch<{ success: boolean; product: any }>(`/api/products/${createdProductId}`);
 
-    addProduct(mapProduct(newCraftProduct));
+      if (latest.success && latest.product) {
+        addProduct(mapProduct(latest.product));
+      } else {
+        throw new Error("Could not fetch the published product.");
+      }
+    } catch (error) {
+      console.error(error);
+
+      const newCraftProduct: Product = {
+        _id: createdProductId,
+        id: createdProductId,
+        title: name,
+        name: name,
+        category: craftType,
+        craftType: craftType,
+        district: region,
+        region: region,
+        artisan: artisan,
+        price: price,
+        description: aiStory || rawNotes,
+        desc: aiStory || rawNotes,
+        isVerified: Boolean(mintedResult),
+        nftVerified: Boolean(mintedResult),
+        nftTokenId: mintedResult?.tokenId,
+        nftTransactionHash: mintedResult?.txHash,
+        images: imageUrl ? [imageUrl] : []
+      };
+
+      addProduct(mapProduct(newCraftProduct));
+    }
+
+    setCurrentPage("marketplace");
     
     // Clear forms
     setName("");
@@ -281,7 +297,11 @@ function Dashboard({ addProduct, user }: DashboardProps) {
     setCreatedProductId(null);
     setMintedResult(null);
     
-    alert("Success! Craft secured and published to direct global marketplace catalog.");
+    alert(
+      mintedResult
+        ? "Success! Craft secured and published to direct global marketplace catalog."
+        : "Success! Craft published to the marketplace. You can mint the NFT certificate later."
+    );
   };
 
   return (
@@ -541,9 +561,9 @@ function Dashboard({ addProduct, user }: DashboardProps) {
             {/* Final publication submit */}
             <button
               type="submit"
-              disabled={!mintedResult}
+              disabled={!createdProductId}
               className={`w-full py-4 text-xs font-semibold rounded-full uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${
-                mintedResult 
+                createdProductId
                   ? "bg-[#F4EDE4] text-black hover:bg-[#C76B29] hover:text-white" 
                   : "bg-white/5 border border-white/10 text-white/40 cursor-not-allowed"
               }`}
@@ -616,7 +636,7 @@ function Dashboard({ addProduct, user }: DashboardProps) {
 
             <div className="border-t border-white/5 pt-3.5 mt-4 text-left flex justify-between items-center">
               <span className="text-[9px] font-mono text-white/40 uppercase">Node synchronized</span>
-              <span className="text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold">online (Celo Alfajores)</span>
+              <span className="text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold">online (Celo Sepolia)</span>
             </div>
 
           </div>

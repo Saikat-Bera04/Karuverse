@@ -43,7 +43,7 @@ if (process.env.NODE_ENV !== "test") {
 app.get("/", (_req, res) => {
   res.json({
     message: "KaruVerse API Running",
-    network: process.env.CELO_NETWORK_NAME || "Celo Alfajores",
+    network: process.env.CELO_NETWORK_NAME || "Celo Sepolia",
     modules: ["auth", "artisans", "products", "ai", "nft", "workshops", "payments"]
   });
 });

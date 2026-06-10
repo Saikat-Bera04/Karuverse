@@ -10,7 +10,7 @@ import {
 import { WagmiProvider } from 'wagmi';
 import {
   celo,
-  celoAlfajores,
+  celoSepolia,
 } from 'wagmi/chains';
 import {
   QueryClientProvider,
@@ -20,7 +20,7 @@ import {
 const config = getDefaultConfig({
   appName: 'Karuverse',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'karuverse-local',
-  chains: [celoAlfajores, celo],
+  chains: [celoSepolia, celo],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 

@@ -520,8 +520,8 @@ function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
                 </div>
               )}
 
-              {/* Trigger 1.5: Register in DB */}
-              {aiStory && !createdProductId && (
+              {/* Trigger 1.5: Register in DB — visible when user has description (AI story OR raw notes) */}
+              {(aiStory || rawNotes) && !createdProductId && (
                  <div className="flex flex-col sm:flex-row gap-4 items-center">
                     <button
                       type="button"
@@ -530,6 +530,9 @@ function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
                     >
                       Save to Database
                     </button>
+                    <p className="text-[10px] text-blue-300/60 font-mono italic text-left">
+                      {aiStory ? "Using AI-generated story as description" : "Using your raw notes as description"}
+                    </p>
                  </div>
               )}
               {createdProductId && (

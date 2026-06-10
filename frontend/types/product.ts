@@ -22,4 +22,5 @@ export interface Product {
   isVerified?: boolean;
   storySnippet?: string;
   images?: string[];
+  createdAt?: string;
 }

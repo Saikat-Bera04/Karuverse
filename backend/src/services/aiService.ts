@@ -1,64 +1,27 @@
 import ai, { GEMINI_MODEL } from "../config/ai";
 import { ApiError } from "../utils/apiError";
 
-let geminiCooldownUntil = 0;
-
-const parseRetryDelaySeconds = (value?: string) => {
-  if (!value) return undefined;
-  const seconds = Number(value.replace("s", ""));
-  return Number.isFinite(seconds) ? Math.ceil(seconds) : undefined;
-};
-
-const extractGeminiError = (error: unknown) => {
-  const fallbackMessage = error instanceof Error ? error.message : String(error);
-
-  try {
-    const parsed = JSON.parse(fallbackMessage);
-    return parsed.error || parsed;
-  } catch {
-    return {
-      code: (error as { code?: number })?.code,
-      status: (error as { status?: string })?.status,
-      message: fallbackMessage
-    };
-  }
-};
-
 const normalizeGeminiError = (error: unknown) => {
-  const geminiError = extractGeminiError(error);
-  const retryInfo = geminiError.details?.find((detail: { "@type"?: string }) =>
-    detail["@type"]?.includes("RetryInfo")
-  );
-  const retryAfterSeconds = parseRetryDelaySeconds(retryInfo?.retryDelay);
-
-  if (geminiError.code === 429 || geminiError.status === "RESOURCE_EXHAUSTED") {
-    geminiCooldownUntil = Date.now() + (retryAfterSeconds || 60) * 1000;
-    const retryMessage = retryAfterSeconds ? ` Retry in about ${retryAfterSeconds}s.` : "";
-    return new ApiError(
-      429,
-      `Gemini quota or rate limit reached for ${GEMINI_MODEL}.${retryMessage} Check GEMINI_API_KEY billing/quota or switch GEMINI_MODEL.`
-    );
+  const message = error instanceof Error ? error.message : String(error);
+  
+  if (message.includes("429") || message.includes("rate_limit")) {
+    return new ApiError(429, `Gemini API rate limited. Please retry in a moment.`);
   }
-
-  if (geminiError.code === 400 || geminiError.status === "INVALID_ARGUMENT") {
-    return new ApiError(400, `Gemini request failed: ${geminiError.message || "Invalid request"}`);
+  
+  if (message.includes("503") || message.includes("overloaded")) {
+    return new ApiError(503, `Gemini service is overloaded. Please retry in a moment.`);
   }
-
-  if (geminiError.code === 401 || geminiError.code === 403) {
-    return new ApiError(503, "Gemini API key is invalid or not authorized for this model.");
+  
+  if (message.includes("401") || message.includes("authentication")) {
+    return new ApiError(503, "Gemini API key is invalid or not authorized.");
   }
-
-  return new ApiError(503, `Gemini service unavailable: ${geminiError.message || "Unknown error"}`);
+  
+  return new ApiError(503, `Gemini service error: ${message}`);
 };
 
 const runGeminiRequest = async <T>(request: () => Promise<T>) => {
   if (!ai) {
     throw new ApiError(503, "GEMINI_API_KEY is not configured on the backend.");
-  }
-
-  if (Date.now() < geminiCooldownUntil) {
-    const waitSeconds = Math.ceil((geminiCooldownUntil - Date.now()) / 1000);
-    throw new ApiError(429, `Gemini is cooling down after a quota response. Retry in about ${waitSeconds}s.`);
   }
 
   try {
@@ -71,20 +34,29 @@ const runGeminiRequest = async <T>(request: () => Promise<T>) => {
 const generateText = async (input: {
   contents: string;
   systemInstruction: string;
-  responseMimeType?: string;
+  maxTokens?: number;
 }) => {
-  const response = await runGeminiRequest(() =>
-    ai!.models.generateContent({
+  const response = await runGeminiRequest(async () => {
+    const model = ai!.getGenerativeModel({ 
       model: GEMINI_MODEL,
-      config: {
-        systemInstruction: input.systemInstruction,
-        ...(input.responseMimeType ? { responseMimeType: input.responseMimeType } : {})
-      },
-      contents: input.contents
-    })
-  );
+      systemInstruction: input.systemInstruction
+    });
+    
+    return model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: input.contents }]
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: input.maxTokens || 1024,
+        temperature: 0.7
+      }
+    });
+  });
 
-  return response.text?.trim() || "";
+  return response.response.text()?.trim() || "";
 };
 
 export const generateProductDescription = async (input: {
@@ -95,8 +67,9 @@ export const generateProductDescription = async (input: {
 }) => {
   return generateText({
     systemInstruction:
-      "You write warm, trustworthy marketplace copy for handmade Indian artisan products. Keep it culturally respectful and concise.",
-    contents: `Create a product description in ${input.language || "English"} for "${input.title}", craft type ${input.craftType}, district ${input.district || "unknown"}.`
+      "You write warm, trustworthy marketplace copy for handmade Indian artisan products. Keep it culturally respectful and very concise (2-3 sentences max).",
+    contents: `Create a brief product description (2-3 sentences) in ${input.language || "English"} for "${input.title}", craft type ${input.craftType}, district ${input.district || "unknown"}.`,
+    maxTokens: 300
   });
 };
 
@@ -110,15 +83,17 @@ export const generateStory = async (input: {
 }) => {
   return generateText({
     systemInstruction:
-      "You create short cultural storytelling scripts for artisan products, suitable for a Hear the Story button.",
-    contents: JSON.stringify(input)
+      "You create very short cultural storytelling snippets (max 3 sentences) for artisan products. Be concise and memorable.",
+    contents: `Create a brief story (3 sentences max) for this artisan product: ${JSON.stringify(input)}`,
+    maxTokens: 300
   });
 };
 
 export const translateText = async (text: string, language: string) => {
   return generateText({
-    systemInstruction: "Translate faithfully while preserving artisan and craft context.",
-    contents: `Translate to ${language}: ${text}`
+    systemInstruction: "Translate faithfully while preserving artisan and craft context. Keep translation concise.",
+    contents: `Translate to ${language}: ${text}`,
+    maxTokens: 500
   });
 };
 
@@ -128,10 +103,13 @@ export const suggestPrice = async (input: {
   category: string;
   baseCurrency?: string;
 }) => {
-  return generateText({
+  const response = await generateText({
     systemInstruction:
-      "Suggest a fair artisan marketplace price. Return compact JSON with minPrice, maxPrice, recommendedPrice, currency, and reasoning.",
-    responseMimeType: "application/json",
-    contents: JSON.stringify({ baseCurrency: "INR", ...input })
+      "Suggest a fair artisan marketplace price. Return ONLY valid JSON (no markdown) with minPrice, maxPrice, recommendedPrice, currency, and reasoning (1-2 sentences max).",
+    contents: `Analyze and suggest prices for this artisan product: ${JSON.stringify({ baseCurrency: "INR", ...input })}. Return only valid JSON with no markdown formatting.`,
+    maxTokens: 400
   });
+  
+  // Clean JSON response (remove markdown formatting if present)
+  return response.replace(/```json\n?|```\n?/g, "").replace(/```\n?/g, "");
 };

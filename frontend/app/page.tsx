@@ -14,6 +14,7 @@ import WorkshopRoom from "@/components/WorkshopRoom";
 import ProductDetail from "@/components/ProductDetail";
 import SignIn from "@/components/SignIn";
 import SignUp from "@/components/SignUp";
+import Profile from "@/components/Profile";
 
 import { Product } from "@/types/product";
 import { apiFetch, API_URL } from "@/lib/api";
@@ -200,6 +201,12 @@ export default function Home() {
         {currentPage === "signup" && (
           <SignUp 
             onLoginSuccess={handleLoginSuccess}
+            setCurrentPage={setCurrentPage}
+          />
+        )}
+
+        {currentPage === "profile" && (
+          <Profile 
             setCurrentPage={setCurrentPage}
           />
         )}

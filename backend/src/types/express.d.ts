@@ -5,6 +5,9 @@ declare global {
     interface Request {
       user?: IUser;
     }
+    namespace Multer {
+      interface File {}
+    }
   }
 }
 

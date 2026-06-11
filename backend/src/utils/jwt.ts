@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import type { StringValue } from "ms";
 import type { IUser } from "../models/User";
 
 export const signToken = (user: IUser) => {
@@ -14,6 +13,6 @@ export const signToken = (user: IUser) => {
       walletAddress: user.walletAddress
     },
     process.env.JWT_SECRET,
-    { expiresIn: (process.env.JWT_EXPIRE || "7d") as StringValue }
+    { expiresIn: process.env.JWT_EXPIRE || "7d" }
   );
 };

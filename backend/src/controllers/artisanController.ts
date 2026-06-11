@@ -6,6 +6,10 @@ import { asyncHandler } from "../utils/asyncHandler";
 export const createProfile = asyncHandler(async (req, res) => {
   if (!req.user) throw new ApiError(401, "Authentication required");
 
+  // Upgrade user role to artisan when creating profile
+  await User.updateOne({ _id: req.user._id }, { role: "artisan" });
+  req.user.role = "artisan";
+
   const profile = await ArtisanProfile.findOneAndUpdate(
     { user: req.user._id },
     { ...req.body, user: req.user._id },

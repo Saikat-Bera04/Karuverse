@@ -7,10 +7,26 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 export const mintNft = asyncHandler(async (req, res) => {
   const { productId, walletAddress } = req.body;
+  
+  if (!req.user) {
+    throw new ApiError(401, "Authentication required");
+  }
+  
   const product = await Product.findById(productId).populate("artisan", "name district village");
 
   if (!product) {
     throw new ApiError(404, "Product not found");
+  }
+
+  // Check if user is artisan/admin or product owner
+  // After .populate(), product.artisan is a full object — compare ._id
+  const artisanId = (product.artisan as unknown as { _id?: unknown })?._id ?? product.artisan;
+  const isAuthorized =
+    req.user.role === "admin" ||
+    req.user.role === "artisan" ||
+    String(artisanId) === String(req.user._id);
+  if (!isAuthorized) {
+    throw new ApiError(403, "Only the product owner or artisans can mint NFT certificates");
   }
 
   const artisan = product.artisan as unknown as {
@@ -62,7 +78,8 @@ export const verifyNft = asyncHandler(async (req, res) => {
   if (!certificate) throw new ApiError(404, "Certificate not found");
 
   const contract = getNftContract();
-  const owner = await contract.ownerOf(req.params.tokenId);
+  const tokenIdParam = String(req.params.tokenId);
+  const owner = await contract.ownerOf(BigInt(tokenIdParam));
 
   res.json({
     success: true,

@@ -395,6 +395,7 @@ function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
                   <option value="Burdwan">Burdwan District</option>
                   <option value="Shantiniketan">Shantiniketan District</option>
                   <option value="Birbhum">Birbhum District</option>
+                  <option value="Purulia">Birbhum District</option>
                 </select>
               </div>
 

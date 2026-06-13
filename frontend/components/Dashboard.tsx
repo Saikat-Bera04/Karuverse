@@ -378,6 +378,7 @@ function Dashboard({ addProduct, setCurrentPage, user }: DashboardProps) {
                   <option value="dokra">Dokra Brass Art</option>
                   <option value="alpana">Alpana & Wood</option>
                   <option value="instruments">Folk Instruments</option>
+                   <option value="Chaw Mask">chaw Dance</option>
                 </select>
               </div>
 

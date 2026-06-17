@@ -28,7 +28,7 @@
 - **Media Storage:** [Cloudinary](https://cloudinary.com/)
 
 ### Smart Contracts
-- **Network:** [Celo Sepolia](https://celo.org/)
+- **Network:** [Celo Sepolia testnet](https://celo.org/)
 - **Standard:** ERC-721 (Non-Fungible Tokens)
 - **Language:** Solidity
 

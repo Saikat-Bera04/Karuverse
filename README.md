@@ -23,12 +23,12 @@
 - **Framework:** [Express.js](https://expressjs.com/)
 - **Database:** [MongoDB](https://www.mongodb.com/) (Mongoose)
 - **AI Integration:** [Google Generative AI](https://ai.google.dev/)
-- **Blockchain:** [Ethers.js](https://docs.ethers.org/)
+- **Blockchain:** [solidity](https://docs.ethers.org/)
 - **Payments:** [Razorpay](https://razorpay.com/)
 - **Media Storage:** [Cloudinary](https://cloudinary.com/)
 
 ### Smart Contracts
-- **Network:** [Celo Sepolia](https://celo.org/)
+- **Network:** [Celo Sepolia testnet](https://celo.org/)
 - **Standard:** ERC-721 (Non-Fungible Tokens)
 - **Language:** Solidity
 
